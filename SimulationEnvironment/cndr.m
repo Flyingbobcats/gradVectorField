@@ -37,9 +37,9 @@ classdef cndr
         
         
         %Activation Functions
-        H = 1
+        H = 0
         G = 1
-        L = 1
+        L = 0
         
         type = 'const'
         

@@ -8,7 +8,7 @@ clear
 close all
 
 %Circular Field
-circular =  false;
+circular =  true;
 normsOffCirc = false;       %Will deactive ALL normilization
 
 
@@ -24,7 +24,7 @@ if circular
     vf = vectorField;
     vf = vf.navf('circ');
     vf =  vf.xydomain(10,0,0,20);
-    vf.avf{1}.r = 0.5;
+    vf.avf{1}.r = 5;
     
     if normsOffCirc
         vf.avf{1}.normComponents = false;
