@@ -89,7 +89,7 @@ classdef cndr
             
             %Normalize the total
             if self.normTotal
-                N = norm(Vt);
+                N = sqrt(Vt(1)^2+Vt(2)^2);
                 u =   Vt(1)/N;
                 v =   Vt(2)/N;
             else
@@ -99,7 +99,7 @@ classdef cndr
             
             %Apply the decay function
             if self.decayActive
-                p = self.decay(range/self.decayR);
+                p = self.decay(range);
                 u = p*u;
                 v = p*v;
             end
@@ -187,7 +187,15 @@ classdef cndr
             
             if strcmp(type,'hyper') == 1
 %                 self.decay = @(r) 0.5*(1-tanh(4*r/self.decayR-4));
-                self.decay = @(r) 0.5*(1-tanh(6*r-4));
+%                 self.decay = @(r) 0.5*(1-tanh(6*r-4));
+
+                   
+                %tan hyper decay with max strength = 1
+%                 self.decay = @(r) -(tanh(2*pi*r/self.decayR-pi)+1)/2+1;
+
+            self.decay = @(r) -(tanh(2*pi*r/self.decayR-pi))+1;
+
+
             end
             
         end
@@ -212,9 +220,24 @@ classdef cndr
             theta = 0:0.05:2*pi;
             cxs = self.x+self.decayR*cos(theta);
             cys = self.y+self.decayR*sin(theta);
+            plt = plot(cxs,cys,'k--',self.x,self.y,'r*','linewidth',2.5);
+            
+        end
+        
+        function plt = pltEqualStrength(self)
+            
+            syms radius
+            equalStrengthRadius = solve(self.decay(radius)==1,radius);
+            
+            theta = 0:0.05:2*pi;
+            cxs = self.x+equalStrengthRadius*cos(theta);
+            cys = self.y+equalStrengthRadius*sin(theta);
             plt = plot(cxs,cys,'r--',self.x,self.y,'r*','linewidth',2.5);
             
         end
+        
+        
+        
         
     end
 end
