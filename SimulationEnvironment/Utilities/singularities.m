@@ -12,9 +12,9 @@ vf.rvf{1}.r = 0.01;
 vf.rvf{1} = vf.rvf{1}.modDecay('hyper');
 
 vf.rvfWeight = 1;
-vf = vf.xydomain(10,0,0,200);
+vf = vf.xydomain(10,0,0,25);
 
-vf.rvf{1}.H = 0;
+vf.rvf{1}.H = 1;
 
 vf.NormSummedFields = 0;
 vf.normAttractiveFields = 0;
@@ -42,7 +42,6 @@ grid on
 xlabel('x');
 ylabel('y');
 zlabel('vector magnitude');
-shading interp
 
 
 

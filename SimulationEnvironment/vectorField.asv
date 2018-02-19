@@ -180,18 +180,10 @@ classdef vectorField
         end
         
         
-        function f = singularityDetect(self,x)
-            
-            [Ut,Vt] = self.heading(x(1),x(2));
-            f = sqrt(Ut^2+Vt^2);
+        function f = singularityDetect(self,x,y)
+%             [Ut,Vt] = self.heading(x,y);
+%             f = sqrt(Ut^2+Vt^2);
            
-            
-        end
-        
-        
-        function minimums = findSings(self)
-            
-            minimums = fminsearch(@self.singularityDetect,[0,0]);
             
         end
         

@@ -68,9 +68,15 @@ classdef cndr
             Vtv = Vtv*-1;
             %Normalize each components
             if self.normComponents == true
-                VcircNorm = norm(Vcirc);
-                VconvNorm = norm(Vconv);
-                VtvNorm = norm(Vtv);
+                
+                VcircNorm = sqrt(Vcirc(1)^2+Vcirc(2)^2);
+                VconvNorm = sqrt(Vconv(1)^2+Vconv(2)^2);
+                
+                VtvNorm =  sqrt(Vtv(1)^2+Vtv(2)^2);
+                
+%                 VcircNorm = norm(Vcirc);
+%                 VconvNorm = norm(Vconv);
+%                 VtvNorm = norm(Vtv);
                 
                 if VtvNorm == 0
                      Vt = -self.G*Vconv/VconvNorm+self.H*Vcirc/VcircNorm;
