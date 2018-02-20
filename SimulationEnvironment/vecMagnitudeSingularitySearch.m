@@ -22,13 +22,15 @@ vf.rvf{1}.r = 0.01;
 vf.rvf{1} = vf.rvf{1}.modDecay('hyper');
 
 vf.rvfWeight = 1;
-vf = vf.xydomain(20,0,0,250);
+vf = vf.xydomain(20,0,0,100);
 
 
 %Turn off normalization at all levels
 vf.NormSummedFields = false;
-vf.normAttractiveFields = false;
+vf.normAttractiveFields = true;
 vf.normRepulsiveFields = false;
+
+
 vf.avf{1}.normComponents = true;
 
 
@@ -36,13 +38,16 @@ vf.rvf{1}.normComponents = true;
 vf.rvf{1}.normTotal = false;
 
 
+figure
+vf.pltff
+
 
 func = @(x,y) vf.singularityDetect(x);
 
-options = optimset('PlotFcns',@optimplotfval,'TolFun',1e-2);
+options = optimset('PlotFcns',@optimplotfval,'TolFun',1e-1);
 
 
-xs = -5:5:5;
+xs = -5:1:5;
 ys = xs;
 
 
