@@ -20,7 +20,7 @@ for i=1:length(xs)
         
         V = -[ (xs(i)*a+ys(j)*b)*a ; (xs(i)*a+ys(j)*b)*b ; 1] + [b;-a;0];
         
-        mag = sqrt(V(1)^2+V(2)^2);
+        mag = 1%sqrt(V(1)^2+V(2)^2);
         Us(i,j) = V(1)/mag;
         Vs(i,j)  = V(2)/mag;
         XS(i,j) = xs(i);
@@ -28,6 +28,8 @@ for i=1:length(xs)
         
     end
 end
+
+
 
 
 quiver(XS,YS,Us,Vs);
@@ -45,7 +47,7 @@ for i=1:length(xs)
             1];
             
         
-        mag = sqrt(V(1)^2+V(2)^2);
+        mag = 1%sqrt(V(1)^2+V(2)^2);
         Us(i,j) = V(1)/mag;
         Vs(i,j)  = V(2)/mag;
         XS(i,j) = xs(i);
