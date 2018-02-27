@@ -50,7 +50,9 @@ if strcmp(type,'circle')
         d_theta = 0.1;
     end
     
-    theta = 0:d_theta:2*pi;
+%     theta = 0:d_theta:2*pi;
+    
+    theta = deg2rad(90):d_theta:deg2rad(270);
     XS = r*cos(theta);
     YS = r*sin(theta);
     
