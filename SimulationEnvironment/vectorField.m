@@ -180,20 +180,8 @@ classdef vectorField
         end
         
         
-        function f = singularityDetect(self,x)
-            
-            [Ut,Vt] = self.heading(x(1),x(2));
-            f = sqrt(Ut^2+Vt^2);
-           
-            
-        end
         
-        
-        function minimums = findSings(self)
-            
-            minimums = fminsearch(@self.singularityDetect,[0,0]);
-            
-        end
+       
         
         function [Ut,Vt] = heading(self,x,y)
             
@@ -253,7 +241,7 @@ classdef vectorField
         
         
         %=================== Plotting ====================================%
-        function pltff(self)
+        function fig = pltff(self)
             [x,y,u,v] = self.sumFields;   
 %             if sum(isnan(u(:))) > 0 || sum(isnan(v(:))) > 0
 %                warning('sumFields returned NaN'); 
@@ -261,6 +249,8 @@ classdef vectorField
             
             quiver(x,y,u,v,'linewidth',1);
             axis equal
+            
+            fig = gca;
         end
         
         function pltPaths(self)

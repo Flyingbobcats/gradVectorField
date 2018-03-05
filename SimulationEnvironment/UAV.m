@@ -95,7 +95,9 @@ classdef UAV
         function self = calcFlightEnv(self)
             
              
-            turnrates = -self.turnrate:0.05:self.turnrate;
+%             turnrates = -self.turnrate:0.05:self.turnrate;
+            
+            turnrates = linspace(-self.turnrate,self.turnrate,5);
             
             for j=1:length(turnrates)
                 
@@ -155,7 +157,7 @@ classdef UAV
             
             
         end
-        function pltUAV(self)
+        function fig = pltUAV(self)
             
             
             if self.plotUAV
@@ -190,7 +192,7 @@ classdef UAV
                 
                 plot(self.flightEnvX,self.flightEnvY,'r.',X1,Y1,'r',X2,Y2,'r');
             end
-            
+           fig = gca; 
         end
             
             
