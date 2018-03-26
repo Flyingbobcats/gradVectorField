@@ -10,16 +10,15 @@ clc
 clear
 close all
 
-v = 25;
-obstR = v/0.35+500;
-obstY = 0;
+v = 50;
+obstR = v/0.35+1000;
 tr = v/0.35;
 lbGamma = (obstR / (tr));
-dt = 0.5;
+dt = 0.1;
 
 plotFinal = false;
 
-fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
+fr = @(X) VF(X,v,dt,plotFinal,obstR);         %Find min with respect to r
 
 
 
@@ -34,7 +33,7 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma,0.1];
+lb = [lbGamma,2];
 ub = [lbGamma*2,6];
 
 
@@ -45,9 +44,7 @@ sim_time = toc;
 
 
 plotFinal = true;
-figure
-pause()
-fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
+fr = @(X) VF(X,v,dt,plotFinal,obstR);
 cost = fr(Xsolved);
 disp(Xsolved)
 disp(cost)
@@ -58,7 +55,7 @@ title(str)
 
 
 
-function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
+function cost = VF(X,velocity,dt,plotFinal,obstR)
 
     gamma = X(1);
     H = X(2);
@@ -72,8 +69,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         vf = vf.navf('line');
         vf.avf{1}.angle = pi/2;
         vf.NormSummedFields = false;
-        vf.avf{1}.H = 2*H*velocity^1/2;%*velocity;
-        vf.avf{1}.H = obstR;
+        vf.avf{1}.H = 2*H*velocity;%*velocity;
         vf.avf{1}.normComponents = false;
         vf.normAttractiveFields = false;
 
@@ -83,7 +79,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         vf.rvf{1}.r = 0.01;
         vf.rvf{1}.H = H;
         vf.rvf{1}.G = -1;
-        vf.rvf{1}.y = obstY;
+        vf.rvf{1}.y = 0;
         
         %Obstacle (no fly zone radius)
 %         obstR = velocity/0.35+150;

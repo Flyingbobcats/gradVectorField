@@ -20,7 +20,7 @@ close all
 
 
 plotIndividualScenarioRealTime = false;
-plotIndividualScenarioCompleted = false;
+plotIndividualScenarioCompleted = true;
 plotGammaCost = true;
 
 %Cost array for all simulations
@@ -28,12 +28,12 @@ COSTS = [];
 
 %Velocities to evaluate performance at
 vs = 10:20:100;
-% vs = 50;
+vs = 50;
 
 
 %Radii ratios to evaluate performance at
 gammas = 1:.1:5;
-% gammas = 1.9999;
+gammas = 1.9999;
 
 
 for i = 1:length(gammas)
@@ -65,7 +65,7 @@ for i = 1:length(gammas)
         
         %Obstacle (no fly zone radius)
         obstR = velocity/0.35;
-%         obstR = 5;
+        obstR = 5;
         obstx = obstR*cos(0:0.1:2.1*pi)+vf.rvf{1}.x;
         obsty = obstR*sin(0:0.1:2.1*pi)+vf.rvf{1}.y;
         
@@ -136,6 +136,7 @@ for i = 1:length(gammas)
         if plotIndividualScenarioCompleted
             hold on
             uav.colorMarker='-';
+            plot(obstx,obsty,'b');
             uav.pltUAV();
             xlabel('x');
             ylabel('y');
