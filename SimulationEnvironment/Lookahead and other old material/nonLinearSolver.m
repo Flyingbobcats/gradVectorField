@@ -9,10 +9,10 @@ close all
 
 
 runCirc = true;
-runGridDensity = true;
-runGridWidth = true;
+runGridDensity = false;
+runGridWidth = false;
 
-xs = -10:1:10;
+xs = -50:5:50;
 ys = xs;
 
 for i=1:length(xs)
@@ -39,18 +39,19 @@ surf(XS,YS,mag)
 if runCirc
 %Circular field
 options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
-R = .5:.5:5;
+R = 10:1:30;
 
 
 figure
 
 for j = 1:length(R)
+    figure
     ops.m = 10;
     ops.n = 10;
     ops.xlimit = 10;
     ops.ylimit = 10;
     ops.r = R(j);
-    ops.d_theta = deg2rad(5);
+    ops.d_theta = deg2rad(10);
     XYS = icPoints('circle',ops);
 
     fun = @VF;
@@ -59,7 +60,7 @@ for j = 1:length(R)
     solverFlag = cell(1,length(XYS));
     
     
-    subplot(length(R)/5,5,j)
+%     subplot(length(R)/5,5,j)
 
 
     hold on
@@ -74,15 +75,15 @@ for j = 1:length(R)
         [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
     end
     update_frequency = 1/toc;
-    str = strcat('Update Frequency = ',num2str(update_frequency),'Hz');
+%     str = strcat('Update Frequency = ',num2str(update_frequency),'Hz');
     theta = 0:0.1:2*pi;
-    cxs = 2.5*cos(theta);
-    cys = 2.5*sin(theta);
-    title(str)
-    plot(cxs,cys,'r--','linewidth',2)
+    cxs = 35/2*cos(theta);
+    cys = 35/2*sin(theta);
+%     title(str)
+    p7 = plot(cxs,cys,'r--','linewidth',2);
 
     
-    
+ 
     for i =1:length(XYS)
         x0 = XYS(1,i);
         y0 = XYS(2,i);
@@ -97,13 +98,16 @@ for j = 1:length(R)
             p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
         end
         axis equal
-        axis([-6,6,-6,6]);
+        axis([-50,50,-50,50]);
         
         
     end
+    legend([p7,p4,p5],{'Equal Strength','Initial Condition','Minimum'});
+    xlabel('x');
+    ylabel('y');
 end
 end
-tightfig
+
 
 if runGridDensity
 %Grid fixed size with different density
@@ -210,9 +214,9 @@ for j = 1:length(ns)
 %             disp('igorning IC');
         else
         if solverFlag{i} == -2
-            p1 = plot(x0,y0,'ro','markersize',7);
-            p2 = plot(x(1),x(2),'r.','markersize',30);
-            p3 = plot([x(1),x0],[x(2),y0],'r--','markersize',15);
+%             p1 = plot(x0,y0,'ro','markersize',7);
+%             p2 = plot(x(1),x(2),'r.','markersize',30);
+%             p3 = plot([x(1),x0],[x(2),y0],'r--','markersize',15);
         elseif solverFlag{i} ==1
             p4 = plot(x0,y0,'ko','markersize',7);
             p5 =plot(x(1),x(2),'k.','markersize',45);
@@ -242,12 +246,13 @@ xc = 0;
 yc = 0;
 r = 0.1;
 
-decayR = 5;
+decayR = 35;
 
 
 UG = -(a*x+b*y)*a+b;
 VG = -(a*x+b*y)*b-a;
 magG = sqrt(UG^2+VG^2);
+
 
 
 H = 0;
