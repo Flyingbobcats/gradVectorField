@@ -10,34 +10,23 @@ clc
 clear
 close all
 
-vs = 20:20:200;
-lateralD = 0:-20:-200;
-
-
-
-% for i=1:length(vs)
-for i=1:length(lateralD)
-figure
-% v = vs(i);
-v = 50;
-obstR = v/0.35+;
+v = 25;
+obstR = v/0.35+500;
 obstY = 0;
-obstY = lateralD(i);
 tr = v/0.35;
 lbGamma = (obstR / (tr));
-dt = 0.1;
+dt = 0.5;
 
 plotFinal = false;
 
 fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
 
 
-% 
-% options = optimoptions('fmincon','Display','final-detailed');
-options = optimoptions('fmincon','Display','off');
+
+options = optimoptions('fmincon','Display','final-detailed');
 options.DiffMinChange = 0.01;
 options.DiffMaxChange = 0.1;
-% options.PlotFcn = @optimplotfval;
+options.PlotFcn = @optimplotfval;
 options.StepTolerance = 1e-8;
 
 x0 = [lbGamma*1.5,2];
@@ -45,7 +34,7 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma,2];
+lb = [lbGamma,0.1];
 ub = [lbGamma*2,6];
 
 
@@ -56,13 +45,14 @@ sim_time = toc;
 
 
 plotFinal = true;
+figure
+pause()
 fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
 cost = fr(Xsolved);
 disp(Xsolved)
 disp(cost)
 str = strcat('\gamma = ',num2str(Xsolved(1)),{' '}, 'h=',num2str(Xsolved(2)),{' '},'cost=',num2str(cost),{' '},'time=',num2str(sim_time));
 title(str)
-end
 
 
 
@@ -136,7 +126,6 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         cost = 0;
 
     cost = 0;
-  
     while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
 
         [u,v]=vf.heading(uav.x,uav.y);
@@ -159,14 +148,11 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         end
 
         if plotFinal == true
-            
             clf
-            
             hold on
             vf.rvf{1}.pltDecay();
-           plot(obstx,obsty,'b');
+            plot(obstx,obsty,'b');
             uav.pltUAV();
-            
             %                 str = strcat('velocity = ',num2str(vs(j)), ' cost= ',num2str(cost),'\gamma=',num2str(gamma),'h=',num2str(h));
             %                 title(str);
             axis equal
@@ -174,6 +160,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
             grid on
             end
     end
+    
 
 end
 

@@ -35,8 +35,8 @@ for i=1:length(headings)
     heading = headings(i);
     uav = UAV();
     uav = uav.setup(x,y,v,0,dt);
-    uav.pltHeading = 0;
-    uav.pltCmdHeading = 0;
+    uav.plotHeading = 0;
+    uav.plotCmdHeading = 0;
     
     
     for j = 1:length(T)
