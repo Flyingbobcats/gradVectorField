@@ -64,7 +64,7 @@ for j = 1:length(R)
 
 
     hold on
-    quiver(XS,YS,US,VS);
+    p9 = quiver(XS,YS,US,VS);
     
     
     
@@ -81,6 +81,7 @@ for j = 1:length(R)
     cys = 35/2*sin(theta);
 %     title(str)
     p7 = plot(cxs,cys,'r--','linewidth',2);
+    p8 = plot([-50,60],[0,0],'g','linewidth',3);
 
     
  
@@ -102,7 +103,11 @@ for j = 1:length(R)
         
         
     end
-    legend([p7,p4,p5],{'Equal Strength','Initial Condition','Minimum'});
+    legend([p9,p7,p4,p5,p8],{'Guidance Vector','Equal Strength','Initial Condition','Singularity','Path'});
+    xticks(-50:10:50);
+    yticks(-50:10:50);
+    axis([-50,50,-50,50]);
+    set(gca,'fontsize',12);
     xlabel('x');
     ylabel('y');
 end
@@ -237,45 +242,48 @@ function F = VF(X)
 %Compute values of each vector component
 x = X(1);
 y = X(2);
-%Constants
-theta = deg2rad(90);
-a = cos(theta);
-b = sin(theta);
+vf = vectorField();
 
-xc = 0;
-yc = 0;
-r = 0.1;
+vf = vf.xydomain(50,0,0,20);
 
-decayR = 35;
-
-
-UG = -(a*x+b*y)*a+b;
-VG = -(a*x+b*y)*b-a;
-magG = sqrt(UG^2+VG^2);
+%Goal Path
+vf = vf.navf('line');
+vf.avf{1}.angle = pi/2;
+vf.NormSummedFields = false;
+vf.avf{1}.H = 5;
+vf.avf{1}.normComponents = false;
 
 
 
-H = 0;
-G = 1;
+%Obstacle
+vf = vf.nrvf('circ');
+vf.rvf{1}.decayR = 35;
+vf.rvf{1}.r = 0.01;
+vf.rvf{1}.H = 0;
+vf.rvf{1}.G = -1;
+vf.rvf{1}.y = 0;
 
-UO = G*2*(x-xc)*((x-xc)^2+(y-yc)^2-r^2)+H*2*(y-yc);
-VO = G*2*(y-yc)*((x-xc)^2+(y-yc)^2-r^2)-H*2*(x-xc);
-magO = sqrt(UO^2+VO^2);
+[U,V] = vf.heading(x,y);
 
-
-ug = UG/magG;
-vg = VG/magG;
-
-uo = UO/magO;
-vo = VO/magO;
-
-r = sqrt((x-xc)^2+(y-yc)^2);
-p = -(tanh(2*pi*r/decayR-pi))+1;
-
-F(1) = ug+p*uo;
-F(2) = vg+p*vo;
+F(1) = U;
+F(2) = V;
 
 % mag = sqrt(F(1)^2+F(2)^2);
 % F(1) = F(1)/mag;
 % F(2) = F(2)/mag;
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,43 +1,39 @@
+%========================================================================
+% optPathAndVF.m
+%
+% Determine constant VF weight and decay radius for minimizing deviation
+% from the geometric optimal path
+%
+% overlay optimal path and vector field guidance.
+%
 %=========================================================================
-% numericallySolveGammaAndH.m
-%
-%
-%==========================================================================
-
-
 
 clc
 clear
 close all
 
 v = 10;
-obstR = v/0.35;
-obstY = -50;
+obstR = v/0.35+100;
+obstY = 0;
 tr = v/0.35;
 lbGamma = (obstR / (tr));
 dt = 0.1;
 
 plotFinal = false;
-
 fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
-
-
-
 options = optimoptions('fmincon','Display','final-detailed');
-options.DiffMinChange = 0.01;
-options.DiffMaxChange = 0.1;
+options.DiffMinChange = 0.05;
+options.DiffMaxChange = 0.5;
 options.PlotFcn = @optimplotfval;
 options.StepTolerance = 1e-8;
 
-x0 = [lbGamma*1.5,2];
+x0 = [lbGamma*1.5,2]; 
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma,0.1];
+lb = [lbGamma*0.5,0.1];
 ub = [lbGamma*2,6];
-
-
 
 tic
 [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
@@ -58,12 +54,11 @@ ylabel('y');
 
 
 
-
-
 function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
     gamma = X(1);
     H = X(2);
+
 
     %Setup vector field
         vf = vectorField();
@@ -74,8 +69,8 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         vf = vf.navf('line');
         vf.avf{1}.angle = pi/2;
         vf.NormSummedFields = false;
-        vf.avf{1}.H = 2*H*velocity^1/2;%*velocity;
         vf.avf{1}.H = obstR;
+        
         vf.avf{1}.normComponents = false;
         vf.normAttractiveFields = false;
 
@@ -88,9 +83,12 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         vf.rvf{1}.y = obstY;
         
         %Obstacle (no fly zone radius)
-%         obstR = velocity/0.35+150;
+%        obstR = velocity/0.35+150;
         obstx = obstR*cos(0:0.1:2.1*pi)+vf.rvf{1}.x;
         obsty = obstR*sin(0:0.1:2.1*pi)+vf.rvf{1}.y;
+        
+        
+        
         
         
         
@@ -110,18 +108,20 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         uav.plotUAV = false;
         uav.plotUAVPath = true;
         uav.plotFlightEnv = false;
+        uav.colorMarker = 'r.';
+        
+        optPath = genOptPath(uav,obstR);
         
         
 
         
-        %Change UAVs starting position to just outside the decay field edge
+
 
         
         %Set decay field strength based on gamma ratio, plus obstacles
         %radius
-        
+     
         vf.rvf{1}.decayR = uav.turn_radius*gamma+obstR;
-        
         vf.rvf{1} = vf.rvf{1}.modDecay('hyper');
         
         %Cost function initially 0
@@ -129,6 +129,18 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
     cost = 0;
     while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
+        
+        
+        LOS = atan2(-uav.y,-uav.x);
+        rad2deg(LOS);
+        p = -1*(-(tanh(2*pi*LOS/(pi)-pi))+1);
+        
+        vf.rvf{1}.G = p;
+        vf.rvf{1}.H = 2/((-(tanh(2*pi*LOS/(1.5*pi)-pi))+1));
+        
+%         if uav.x>0
+%             vf.rvf{1}.G = 0;
+%         end
 
         [u,v]=vf.heading(uav.x,uav.y);
         heading_cmd = atan2(v,u);
@@ -142,7 +154,11 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
         %Deviation from path cost, normalized with respect to obstacles
         %radius
-        cost = cost+ abs(uav.y) / ((vf.rvf{1}.decayR))*dt;
+%         cost = cost+ abs(uav.y) / ((vf.rvf{1}.decayR))*dt;
+         [dist,location] = calcLatDistance(uav.x,uav.y,optPath);
+         cost = cost + dist;
+        
+         
 
         range = sqrt((uav.x-vf.rvf{1}.x)^2+(uav.y-vf.rvf{1}.y)^2);
         if range < obstR
@@ -150,29 +166,24 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         end
 
         if plotFinal == true
+            
+            [dist,location] = calcLatDistance(uav.x,uav.y,optPath);
+   
             clf
             hold on
+            plot([uav.x,optPath(location(1),1)],[uav.y,optPath(location(1),2)],'g');
+            plot(optPath(:,1),optPath(:,2),'k.');
             vf.rvf{1}.pltDecay();
             plot(obstx,obsty,'b');
             uav.pltUAV();
-            %                 str = strcat('velocity = ',num2str(vs(j)), ' cost= ',num2str(cost),'\gamma=',num2str(gamma),'h=',num2str(h));
-            %                 title(str);
             axis equal
-            pause(0.001)
+            drawnow()
             grid on
             end
     end
     
+    if plotFinal == true
+        vf.pltff()
+    end
 
 end
-
-
-
-
-
-
-
-
-
-
-
