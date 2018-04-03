@@ -116,7 +116,7 @@ classdef UAV
             end
             
       
-            LookDt = 0.5;
+            LookDt = 5;
             VX = self.v*cos(theta);
             VY = self.v*sin(theta);
             x = self.x+VX*LookDt;

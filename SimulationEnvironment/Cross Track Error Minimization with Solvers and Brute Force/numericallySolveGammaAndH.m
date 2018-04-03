@@ -11,11 +11,11 @@ clear
 close all
 
 v = 25;
-obstR = v/0.35+500;
-obstY = 0;
+obstR = v/0.35+10;
+obstY = -35;
 tr = v/0.35;
 lbGamma = (obstR / (tr));
-dt = 0.5;
+dt = 0.1;
 
 plotFinal = false;
 
@@ -107,7 +107,8 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         uav.plotCmdHeading = false;
         uav.plotUAV = false;
         uav.plotUAVPath = true;
-        uav.plotFlightEnv = true;
+        uav.plotFlightEnv = false;
+        uav.colorMarker = 'k--';
         
         
 
@@ -147,19 +148,28 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
             cost = cost+100;
         end
 
-        if plotFinal == true
+      
+    end
+      if plotFinal == true
             clf
             hold on
-            vf.rvf{1}.pltDecay();
-            plot(obstx,obsty,'b');
+
+            plot(obstx,obsty,'r','linewidth',2);
+            plot(uav.xs(1),uav.ys(1),'d','markersize',10,'markerfacecolor','b');
+            plot([-250,250],[0,0],'g','linewidth',2);
             uav.pltUAV();
-            %                 str = strcat('velocity = ',num2str(vs(j)), ' cost= ',num2str(cost),'\gamma=',num2str(gamma),'h=',num2str(h));
-            %                 title(str);
+            
+            xlabel('x');
+            ylabel('y');
+            set(gca,'fontsize',12);
+
             axis equal
-            pause(0.001)
             grid on
+
+            
+            
+            legend({'Obstacle','UAV Start','Pre-planned Path','UAV Path'});
             end
-    end
     
 
 end

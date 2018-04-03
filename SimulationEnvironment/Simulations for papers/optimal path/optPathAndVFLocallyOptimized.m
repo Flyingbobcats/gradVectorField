@@ -104,10 +104,10 @@ function VF(velocity,dt,plotFinal,obstR,obstY)
     
     %Optimization Options
     options = optimoptions('fmincon','Display','off');
-    options.DiffMinChange = 0.1;
-    options.DiffMaxChange = 0.5;
+    options.DiffMinChange = 1;
+    options.DiffMaxChange = 5;
 %     options.PlotFcn = @optimplotfval;
-    options.StepTolerance = 1e-8;
+    options.StepTolerance = 1e-4;
     
     Xs = [1,2];
     while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
@@ -125,7 +125,7 @@ function VF(velocity,dt,plotFinal,obstR,obstY)
         
 
         [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
-        Xsolved
+        costR
         pause();
 
         %Update vector field from lookahead optimization
@@ -175,7 +175,24 @@ function cost = LookAheadCost(X,uav,vf,obstR,optPath)
     [x,y] = uav.dubinsLookAhead(heading_cmd);
     
     %Measure distance to optimal path
-    [cost,index] = calcLatDistance(x,y,optPath);
+%     [cost,index] = calcLatDistance(x,y,optPath);
+
+     range = sqrt((uav.x-vf.rvf{1}.x)^2+(uav.y-vf.rvf{1}.y)^2);
+
+        if abs(x)>=obstR+uav.turn_radius
+            cost = cost + y;
+
+            
+        else
+            cost = cost + (range-obstR);
+
+        end
+        
+       
+   
+        if range < obstR
+            cost = cost+100*uav.t;
+        end
     
 
 %     plot([uav.x,optPath(index(1),1)],[uav.y,optPath(index(1),2)],'g','linewidth',2);
