@@ -247,10 +247,10 @@ classdef vectorField
 %                warning('sumFields returned NaN'); 
 %             end
             
-            quiver(x,y,u,v,'linewidth',1);
+            fig = quiver(x,y,u,v,'linewidth',1);
             axis equal
             
-            fig = gca;
+
         end
         
         function pltPaths(self)

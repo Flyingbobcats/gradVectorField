@@ -164,11 +164,11 @@ classdef UAV
             
             
             if self.plotUAV
-            plot(self.x,self.y,self.colorMarker);
+            fig = plot(self.x,self.y,self.colorMarker);
             end
             
             if self.plotUAVPath
-                plot(self.xs,self.ys,self.colorMarker);
+                fig = plot(self.xs,self.ys,self.colorMarker,'linewidth',2);
             end
             
             if self.plotHeading
@@ -195,7 +195,7 @@ classdef UAV
                 
                 plot(self.flightEnvX,self.flightEnvY,'r.',X1,Y1,'r',X2,Y2,'r');
             end
-           fig = gca; 
+ 
         end
             
             

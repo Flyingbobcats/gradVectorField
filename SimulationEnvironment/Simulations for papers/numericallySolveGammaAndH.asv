@@ -90,7 +90,8 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         vf = vf.navf('line');
         vf.avf{1}.angle = pi/2;
         vf.NormSummedFields = false;
-        vf.avf{1}.H = velocity/0.35;
+        vf.avf{1}.H = 2*H*velocity^1/2;%*velocity;
+        vf.avf{1}.H = ;
         vf.avf{1}.normComponents = false;
         vf.normAttractiveFields = false;
 
