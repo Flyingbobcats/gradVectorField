@@ -1,0 +1,46 @@
+
+
+
+function p = activationFunctions(theta)
+
+
+
+
+
+
+
+
+    if thetas<deg2rad(180)
+        p = 1/2*tanh(4*thetas-pi)+1;
+    else
+        p = -1/2*tanh(4*thetas(i-5*pi)+1;
+    end
+
+
+
+
+end
+
+
+
+% 
+% clc
+% clear
+% close all
+% 
+% thetas = 0:pi:0.1:2*pi;
+% 
+% 
+% 
+% 
+% 
+% for i=1:length(thetas)
+% 
+%     if thetas(i)<deg2rad(180)
+%         p(i) = 1/2*tanh(4*thetas(i)-pi)+1;
+%     else
+%         p(i) = -1/2*tanh(4*thetas(i)-5*pi)+1;
+%     end
+% 
+% end
+

@@ -11,11 +11,11 @@ clear
 close all
 
 v = 10;
-obstR = v/0.35+100;
+obstR = v/0.35+200;
 obstY = 0;
 tr = v/0.35;
 lbGamma = (obstR / (tr));
-dt = 0.1;
+dt = 0.25;
 
 plotFinal = false;
 
@@ -24,8 +24,8 @@ fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
 
 
 options = optimoptions('fmincon','Display','final-detailed');
-options.DiffMinChange = 0.01;
-options.DiffMaxChange = 0.1;
+options.DiffMinChange = 0.1;
+options.DiffMaxChange = 0.2;
 options.PlotFcn = @optimplotfval;
 options.StepTolerance = 1e-2;
 
@@ -34,7 +34,7 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma*0.9,0.1];
+lb = [0,0.1];
 ub = [lbGamma*1.1,6];
 
 
@@ -80,18 +80,19 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
     gamma = X(1);
     H = X(2);
+    
+    plotFlight = true;
 
     %Setup vector field
         vf = vectorField();
         
-        vf = vf.xydomain(225,0,0,60);
+        vf = vf.xydomain(225,0,0,40);
         
         %Goal Path
         vf = vf.navf('line');
         vf.avf{1}.angle = pi/2;
         vf.NormSummedFields = false;
-        vf.avf{1}.H = 2*H*velocity^1/2;%*velocity;
-        vf.avf{1}.H = ;
+        vf.avf{1}.H = obstR/4;
         vf.avf{1}.normComponents = false;
         vf.normAttractiveFields = false;
 
@@ -144,37 +145,82 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         cost = 0;
 
     cost = 0;
+    
+    RANGE = [];
+    AVFW = [];
+    RVFW = [];
     while uav.x<=(uav.turn_radius*gamma+obstR)*2
         range = sqrt((uav.x-vf.rvf{1}.x)^2+(uav.y-vf.rvf{1}.y)^2);
         
-        if range < obstR+uav.turn_radius && uav.x<0
-            vf.avfWeight = 2/sqrt(range);
-            vf.rvfWeight = 1;
-
-            
-        elseif range >= obstR+uav.turn_radius && uav.x<0
-            vf.rvfWeight = 0.2;
-        else
-             vf.rvfWeight = 1;
-            if uav.x>0
-                vf.rvf{1}.G =  vf.rvf{1}.G +0.01;
-                if vf.rvf{1}.G > 0
-                    vf.rvf{1}.G = 0;
-                end
-                
-            end
-            if uav.x>obstR
-            vf.avfWeight = 1;
-
-            
-            
-            if vf.avfWeight > 1
-                vf.avfWeight =1;
-            end
-            end
-            
-       
+        
+        
+        if range < obstR+uav.turn_radius
+        
+        p = activationFunctions(atan2(uav.y,uav.x));
+        
+        vf.avfWeight = 1/p+0.2;
+        vf.rvfWeight = p;
+        
+        if atan2(uav.y,uav.x) > pi/3
+        vf.rvf{1}.G = -p/2;
         end
+        
+        if vf.avfWeight>0.2
+            vf.avfWeight = 0.2;
+        end
+        
+        else
+            
+            if uav.x<0
+            vf.avfWeight =1;
+            vf.rvfWeight = 0.1;
+            else
+                vf.avfWeight = 0.25;
+            end
+                
+        end
+        
+
+        
+
+        
+
+        
+        
+%         if range < obstR+uav.turn_radius && uav.x<0
+%             vf.avfWeight = 2/sqrt(range);
+%             vf.rvfWeight = 0.8;
+% 
+%             
+%         elseif range >= obstR+uav.turn_radius && uav.x<0
+%             vf.rvfWeight = 0.0;
+%         else
+%              vf.rvfWeight = 0.8;
+%             if uav.x>0
+%                 vf.rvf{1}.G =  vf.rvf{1}.G +0.01;
+%                 if vf.rvf{1}.G > 0
+%                     vf.rvf{1}.G = 0;
+%                 end
+%                 
+%             end
+%             if uav.x>obstR
+%             vf.avfWeight = 1;
+%             vf.rvfWeight = 0;
+% 
+%             
+%             
+%             if vf.avfWeight > 1
+%                 vf.avfWeight =1;
+%             end
+%             end
+%             
+%        
+%         end
+%         
+%         RANGE = [RANGE,range];
+%         AVFW = [AVFW,vf.avfWeight];
+%         RVFW = [RVFW,vf.rvfWeight];
+        
         
 
         [u,v]=vf.heading(uav.x,uav.y);
@@ -195,7 +241,90 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         if range < obstR
             cost = cost+100;
         end
+        
+        
+        
+           if plotFlight == true
+            
+            vf.NormSummedFields = true;
+            uav.colorMarker = 'k-';
 
+            clf
+            hold on
+            p1 = vf.pltff();
+            vf.rvf{1}.pltDecay();
+            
+            options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
+            ops.m = 10;
+            ops.n = 10;
+            ops.xlimit = 10;
+            ops.ylimit = 10;
+            ops.r = obstR;
+            ops.d_theta = deg2rad(10);
+            XYS = icPoints('circle',ops);
+            
+            fun = @(X) magVF(X,vf);
+            location = cell(1,length(XYS));
+            gradMag  = cell(1,length(XYS));
+            solverFlag = cell(1,length(XYS));
+            
+            
+            
+
+            
+%             for i =1:length(XYS)
+%                 X0 = [XYS(1,i),XYS(2,i)];
+%                 [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
+%             end
+%             
+%             for i =1:length(XYS)
+%                 x0 = XYS(1,i);
+%                 y0 = XYS(2,i);
+%                 x = location{i};
+%                 if solverFlag{i} == -2
+%                 elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
+% %                     p4 = plot(x0,y0,'ko','markersize',7);
+%                     p7 = plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
+% %                     p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
+%                 end
+%                 
+%                
+%             end
+                
+                p2 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
+                p3 =plot(uav.xs(end),uav.ys(end),'dr','markersize',10,'markerfacecolor','r');
+                                
+
+                p5 =plot([uav.xs(1),uav.xs(end)],[0,0],'g','linewidth',3);
+                p6 =plot(obstx,obsty,'r','linewidth',2);                                     
+%                 p7 = plot(x(1,1),x(1,2),'ro','markersize',5,'markerfacecolor','r');
+                
+                axis([uav.xs(1)-10,225,-60,60]);
+                                                p4 = uav.pltUAV();
+
+                axis equal
+                grid on
+                
+%                 legend([p1,p2,p3,p4,p5,p6,p7],{'Summed Guidance','UAV Start','UAV End','UAV Path','Planned Path','Obstacle','Singularity'});%,'Obstacle','UAV Path','Singularity'});
+                
+                drawnow()
+                
+%                 figure
+%                 subplot(3,1,1);
+%                 plot(uav.ts(2:end),AVFW);
+%                 ylabel('AVFW');
+%                 
+%                 subplot(3,1,2);
+%                 plot(RVFW);
+%                 ylabel('RVFW');
+%                 
+%                 subplot(3,1,3);
+%                 plot(RANGE);
+%                 ylabel('RANGE');
+%         end
+        
+
+                end
     end
     
     
@@ -261,6 +390,9 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
                 grid on
                 
                 legend([p1,p2,p3,p4,p5,p6,p7],{'Summed Guidance','UAV Start','UAV End','UAV Path','Planned Path','Obstacle','Singularity'});%,'Obstacle','UAV Path','Singularity'});
+                
+                
+
         end
 end
 
