@@ -10,12 +10,12 @@ clc
 clear
 close all
 
-v = 20;
+v = 100;
 obstR = v/0.35+100;
 obstY = 0;
 tr = v/0.35;
 lbGamma = (obstR / (tr));
-dt = 0.1;
+dt = 0.2;
 
 plotFinal = false;
 
@@ -24,7 +24,7 @@ fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
 
 
 options = optimoptions('fmincon','Display','final-detailed');
-options.DiffMinChange = 0.1;
+options.DiffMinChange = 0.01;
 options.DiffMaxChange = 1;
 options.PlotFcn = @optimplotfval;
 options.StepTolerance = 1e-5;
@@ -34,7 +34,7 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [0,0.1];
+lb = [0,1];
 ub = [lbGamma*1.1,6];
 
 
@@ -43,6 +43,7 @@ tic
 [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
 sim_time = toc;
 
+% Xsolved = [3.4,3];
 
 plotFinal = true;
 figure
@@ -90,7 +91,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
     %Setup vector field
         vf = vectorField();
         
-        vf = vf.xydomain(225,0,0,20);
+        vf = vf.xydomain(225,0,0,1);
         
         %Goal Path
         vf = vf.navf('line');
@@ -154,54 +155,59 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
     AVFW = [];
     RVFW = [];
     BETA = [];
+    ALPHA = [];
+    GS = [];
     
-    while uav.x<=(uav.turn_radius*gamma+obstR)*2
+    while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
+        
+        
+        
+        alpha = atan2(uav.y,uav.x);
         range = sqrt((uav.x-vf.rvf{1}.x)^2+(uav.y-vf.rvf{1}.y)^2);
+        beta = pi - alpha+uav.heading;
+        
+
+        
+        vf.rvfWeight = 2*activationFunctions(alpha,'r');
+        vf.avfWeight = 1/4*activationFunctions(alpha,'a');
         
         
-        beta = pi - atan2(uav.y,uav.x)+uav.heading;
-        BETA = [BETA,beta];
+
         
-        if atan2(uav.y,uav.x)>deg2rad(15)
+        if uav.x<0
         g = -activationFunctions(beta,'g');
-        vf.rvf{1}.G = g;
+        vf.rvf{1}.G = 2*g;
         else
-            vf.rvf{1}.G = -1;
-        end
+            vf.rvf{1}.G = -0.1;
 
-        
-        if range < obstR+uav.turn_radius
-        
-        p = activationFunctions(atan2(uav.y,uav.x),'r');
-        r = activationFunctions(atan2(uav.y,uav.x),'a');
-        
-        vf.avfWeight = r;
-        vf.rvfWeight = p;
-        
-
-        
-        else
             
-            if uav.x<0
-            vf.avfWeight = 1;
-%             vf.rvfWeight = 0.1;
-            end
-%                 
+           
         end
         
-%         if atan2(uav.y,uav.x)<pi/2
-%             vf.rvf{1}.G = vf.rvf{1}.G+0.001*velocity;
-%             if vf.rvf{1}.G>0
-%                 vf.rvf{1}.G = 0;
-%                 
-%             end
-%             vf.avf{1}.H = obstR*r/2;
-%         end
+        
+        turnR = uav.turn_radius;
+        y = turnR*(1-cos(pi/2));
+        X = 0 - sqrt((turnR+obstR)^2-(y-obstY)^2);
         
         
+        theta = asin((y-obstY)/(obstR+turnR));
+        zeta = pi+theta;
         
+        X_turn = -1*(X+turnR*cos(zeta));
+        Y_turn = y+turnR*sin(zeta);
         
-      
+        turn_at_angle = atan2(Y_turn,X_turn);
+        
+        if alpha <= tu
+        
+        ALPHA = [ALPHA,alpha];
+        BETA = [BETA,beta];
+        RVFW = [RVFW,vf.rvfWeight];
+        AVFW = [AVFW,vf.avfWeight];
+        GS = [GS,vf.rvf{1}.G];
+        
+
+       
 
         [u,v]=vf.heading(uav.x,uav.y);
         heading_cmd = atan2(v,u);
@@ -225,34 +231,50 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         
         
            if plotFlight == true && plotFinal == true
-               
-               
-            theta = 0:0.01:2*pi;
             
             clf
-            subplot(3,5,[4,5]);
-            plot(rad2deg(BETA),'r-');
-            ylabel('\beta (deg)');
+            subplot(5,7,[6,7]);
+            plot(rad2deg(ALPHA),'r-');
+            ylabel('\alpha (deg)');
+            grid on
            
             
-            subplot(3,5,[9,10]);
-            plot(rad2deg(theta),-activationFunctions(theta,'g'),'k',rad2deg(beta),vf.rvf{1}.G,'r*');
-            ylabel('G');
+            subplot(5,7,[13,14]);
+            plot(rad2deg(BETA),'r-');
+            ylabel('\beta (deg)');
             grid on
             
-            subplot(3,5,[14,15]);
-            plot(rad2deg(theta),activationFunctions(theta,'a'),'k',rad2deg(atan2(uav.y,uav.x)),vf.avfWeight,'r*');
+            subplot(5,7,[20,21]);
+            plot(RVFW,'r');            
+            ylabel('RVFW');
+            grid on
             
-            subplot(3,5,[1,2,3,6,7,8,11,12,13]);
+            subplot(5,7,[27,28]);
+            plot(AVFW,'r');
+            ylabel('AVFW');
             
-            disp(strcat('b=',num2str(rad2deg(beta)),{' '},'g=',num2str(g)));
+            subplot(5,7,[34,35]);
+            plot(GS,'r');
+            ylabel('G');
+            
+            subplot(5,7,[1:5,8:12,15:19,22:26,29:33]);
+%             plot(rad2deg(theta), activationFunctions(atan2(uav.y,uav.x),'r'),'k',rad2deg(atan2(uav.y,uav.x)),vf.rvfWeight,'r*');
+%             axis([0,2*pi,-2,2]);
+
+            
             vf.NormSummedFields = true;
             uav.colorMarker = 'k-';
 
          
             hold on
             p1 = vf.pltff();
+            
+
+            
+            
             vf.rvf{1}.pltDecay();
+            
+   
             
             options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
             ops.m = 10;
@@ -299,15 +321,15 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
                 p6 =plot(obstx,obsty,'r','linewidth',2);                                     
 %                 p7 = plot(x(1,1),x(1,2),'ro','markersize',5,'markerfacecolor','r');
                 
-                axis([uav.xs(1)-10,225,-60,60]);
-                                                p4 = uav.pltUAV();
+                axis([-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1,-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1]);
+                p4 = uav.pltUAV();
 
                 axis equal
                 grid on
                 
 %                 legend([p1,p2,p3,p4,p5,p6,p7],{'Summed Guidance','UAV Start','UAV End','UAV Path','Planned Path','Obstacle','Singularity'});%,'Obstacle','UAV Path','Singularity'});
                 
-                drawnow()
+               pause(0.00001);
                 
 %                 figure
 %                 subplot(3,1,1);
@@ -386,12 +408,12 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
                 p6 =plot(obstx,obsty,'r','linewidth',2);                                     
                 p7 = plot(x(1,1),x(1,2),'ro','markersize',5,'markerfacecolor','r');
                 
-                axis([uav.xs(1)-10,225,-60,60]);
                                                 p4 = uav.pltUAV();
 
                 axis equal
                 grid on
-                
+                                axis([-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1,-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1]);
+
                 legend([p1,p2,p3,p4,p5,p6,p7],{'Summed Guidance','UAV Start','UAV End','UAV Path','Planned Path','Obstacle','Singularity'});%,'Obstacle','UAV Path','Singularity'});
                 
                 

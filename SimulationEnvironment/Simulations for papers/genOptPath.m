@@ -27,6 +27,11 @@ function optPath = genOptPath(uav,obstR)
     optPathY = [ys,obstY + obstR*sin(gamma),y+turnR*sin(beta), y+turnR*sin(zeta),  ys];
 
     optPath = [optPathX',optPathY'];
+    
+    
+
+    
+
 
 end
 
