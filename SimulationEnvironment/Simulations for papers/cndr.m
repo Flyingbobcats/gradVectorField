@@ -107,6 +107,7 @@ classdef cndr
             if self.decayActive
 %                 p = self.decay(range);
                 p = -(tanh(2*pi*range/self.decayR-pi))+1;
+                
 %                 if range<2
 %                     p
 %                 end
