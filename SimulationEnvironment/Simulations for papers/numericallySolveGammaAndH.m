@@ -10,12 +10,12 @@ clc
 clear
 close all
 
-v = 100;
-obstR = v/0.35+1000;
+v = 10;
+obstR = v/0.35;
 obstY = 0;
 tr = v/0.35;
 lbGamma = (obstR / (tr));
-dt = 0.1;
+dt = 0.25;
 
 plotFinal = false;
 
@@ -35,7 +35,7 @@ b = [];
 Aeq = [];
 beq = [];
 lb = [lbGamma,1];
-ub = [lbGamma*1.1,6];
+ub = [lbGamma*2,6];
 
 
 
@@ -43,7 +43,6 @@ tic
 [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
 sim_time = toc;
 
-% Xsolved = [3.4,3];
 
 plotFinal = true;
 figure
@@ -167,22 +166,18 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         beta = pi - alpha+uav.heading;
         
         
-                        
-                turnR = uav.turn_radius;
-                obstX = 0;
-                y = turnR*(1-cos(pi/2));
-                X = obstX - sqrt((turnR+obstR)^2-(y-obstY)^2);
+        
+        turnR = uav.turn_radius;
+        obstX = 0;
+        y = turnR*(1-cos(pi/2));
+        X = obstX - sqrt((turnR+obstR)^2-(y-obstY)^2);
+                
         if abs(uav.x)<= abs(X)
         
-        vf.rvfWeight = 2*activationFunctions(alpha,'r');
-        vf.avfWeight = 1/4*activationFunctions(alpha,'a');
-        
-        
-
-        
-
-        g = -activationFunctions(abs(beta),'g');
-        vf.rvf{1}.G = 2*g;
+        vf.rvfWeight = 1*activationFunctions(alpha,'r');
+        vf.avfWeight = 1/8*activationFunctions(alpha,'a');
+        g = -cos(beta)-0.1;
+        vf.rvf{1}.G = g;
         
 
 %         vf.avf{1}.H = obstR/2+1/abs(uav.y+0.5);
@@ -203,11 +198,8 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         
         turn_at_angle = atan2(Y_turn,X_turn);
         
-%         if alpha <= turn_at_angle
-%             vf.avf{1}.H = obstR/abs(uav.y);
-%         end
 
-        if uav.x>=abs(X)-uav.turn_radius
+        if uav.x>=abs(X)-uav.turn_radius && uav.y <= Y_turn
             vf.avfWeight = 1;
             vf.rvfWeight = 0;
         end
@@ -215,6 +207,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
             vf.avfWeight = 1;
             vf.rvfWeight = 0;
         end
+
         
         ALPHA = [ALPHA,alpha];
         BETA = [BETA,beta];
@@ -324,11 +317,11 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
             
 
             
-%             for i =1:length(XYS)
-%                 X0 = [XYS(1,i),XYS(2,i)];
-%                 [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
-%             end
-%             
+            for i =1:length(XYS)
+                X0 = [XYS(1,i),XYS(2,i)];
+                [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
+            end
+            
 %             for i =1:length(XYS)
 %                 x0 = XYS(1,i);
 %                 y0 = XYS(2,i);
@@ -441,7 +434,8 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
                 
                 
                                                 p4 = uav.pltUAV();
-
+                hold on
+                vf.pltff();
                 axis equal
                 grid on
                                 axis([-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1,-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1]);

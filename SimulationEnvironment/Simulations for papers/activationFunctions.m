@@ -29,6 +29,7 @@ elseif type == 'g'
 %     else
 %         p = +1/2*tanh(2*theta-5*pi)+0.5;
 %     end
+
     
 end
     
