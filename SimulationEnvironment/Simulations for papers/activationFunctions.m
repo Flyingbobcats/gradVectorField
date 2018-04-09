@@ -6,18 +6,20 @@ function p = activationFunctions(theta,type)
 
 
 if type =='r'
-    if theta<deg2rad(10)
-        p = 1/2*tanh(30*theta-pi)+0.5;
+    if theta<deg2rad(45)
+        p = 1/2*tanh(5*theta-pi)+0.5;
     else
-        p = -1/2*tanh(5*theta-5*pi)+0.5;
+        p = -1/2*tanh(5*theta-6*pi)+0.5;
     end
 
 elseif type =='a'
-        if theta<deg2rad(10)
-        p = -1/2*tanh(30*theta-pi)+1;
-    else
-        p = 1/2*tanh(30*theta-10*pi)+1;
-        end
+%         if theta<deg2rad(0)
+%         p = -1/2*tanh(30*theta-pi)+1;
+%     else
+%         p = 1/2*tanh(30*theta-10*pi)+1;
+%         end
+
+ p = 1;
         
 elseif type == 'g'
     
@@ -60,7 +62,7 @@ end
 % plot(rad2deg(thetas),p)
 
 
-% 
+
 % clc
 % clear
 % close all
@@ -69,7 +71,7 @@ end
 % 
 % for i=1:length(thetas)
 %         theta = thetas(i);
-% p(i) = -1/2*tanh(3*theta-pi)+0.5;
+%  p(i) = -1/2*tanh(3.5*theta-pi)+0.5;
 % end
 % 
 % plot(rad2deg(thetas),p)
