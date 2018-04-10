@@ -25,27 +25,21 @@ function optPath = genOptPath(uav,obstR,obstX,obstY)
     beta = 3*pi/2:d_angle:2*pi-theta;
     
     gamma = theta:d_angle:pi-theta;
+    gamma = pi-theta:-d_angle:theta;
     
     zeta = pi+theta:d_angle:3*pi/2;
-
-
-
-    optPathX = [xs,obstX + obstR*cos(gamma),X+turnR*cos(beta),-X+turnR*cos(zeta), -xs];
-    optPathY = [ys,obstY + obstR*sin(gamma),y+turnR*sin(beta), y+turnR*sin(zeta),  ys];
+        
+    
+%     optPathX = [xs,X+turnR*cos(beta),obstX + obstR*cos(gamma),-X+turnR*cos(zeta), -xs];
+%     optPathY = [ys,y+turnR*sin(beta),obstY + obstR*sin(gamma), y+turnR*sin(zeta),  ys];
+    
+    optPathX = [X+turnR*cos(beta),obstX + obstR*cos(gamma),-X+turnR*cos(zeta)];
+    optPathY = [y+turnR*sin(beta),obstY + obstR*sin(gamma), y+turnR*sin(zeta)];    
 
     optPath = [optPathX',optPathY'];
     
     
     
-%     figure
-%         hold on
-% 
-%     
-%     plot(obstX + obstR*cos(gamma),obstY + obstR*sin(gamma),'r')
-%     plot(X+turnR*cos(beta),y+turnR*sin(beta),'b')
-%     plot(-X+turnR*cos(zeta),y+turnR*sin(zeta),'b.')
-%     plot(X,y,'r*');
-%     axis equal
 
     
 
