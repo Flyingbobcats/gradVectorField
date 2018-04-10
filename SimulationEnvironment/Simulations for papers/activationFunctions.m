@@ -6,20 +6,22 @@ function p = activationFunctions(theta,type)
 
 
 if type =='r'
-    if theta<deg2rad(45)
+    if theta<deg2rad(90)
         p = 1/2*tanh(5*theta-pi)+0.5;
     else
         p = -1/2*tanh(5*theta-6*pi)+0.5;
     end
 
 elseif type =='a'
-%         if theta<deg2rad(0)
-%         p = -1/2*tanh(30*theta-pi)+1;
-%     else
-%         p = 1/2*tanh(30*theta-10*pi)+1;
-%         end
+        if theta<deg2rad(90)
+        p = -1/2*tanh(30*theta-pi)+1;
+    else
+        p = 1/2*tanh(10*theta-10*pi)+1;
+        end
+        
+        p=1
 
- p = 1;
+
         
 elseif type == 'g'
     

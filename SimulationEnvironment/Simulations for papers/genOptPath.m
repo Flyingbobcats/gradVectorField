@@ -1,12 +1,11 @@
-function optPath = genOptPath(uav,obstR)
+function optPath = genOptPath(uav,obstR,obstX,obstY)
 
     turnRate = uav.turnrate;
     turnR = uav.turn_radius;
     obstR = obstR;
 
 
-    obstX = 0;
-    obstY = 0;
+
 
     y = turnR*(1-cos(pi/2));
     X = obstX - sqrt((turnR+obstR)^2-(y-obstY)^2);
