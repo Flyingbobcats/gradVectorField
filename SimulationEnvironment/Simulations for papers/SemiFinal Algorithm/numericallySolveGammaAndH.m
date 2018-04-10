@@ -12,7 +12,7 @@ close all
 
 
 %Setup basic vehicle and obstacle parameters
-v = 9;
+v = 200;
 obstR = v/0.35;
 obstY = 0;
 
@@ -30,7 +30,7 @@ fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
 
 %Optimization options
 options = optimoptions('fmincon','Display','final-detailed');
-options.DiffMinChange = 0.05;
+options.DiffMinChange = 0.1;
 options.DiffMaxChange = 1;
 options.PlotFcn = @optimplotfval;
 options.StepTolerance = 1e-5;
@@ -142,7 +142,7 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     X = obstX - sqrt((turnR+obstR)^2-(y-obstY)^2);
     theta = asin((y-obstY)/(obstR+turnR));
     zeta = pi+theta;
-    X_turn = -1*(X+turnR*cos(zeta));
+    X_turn = (-X+turnR*cos(zeta));
     Y_turn = y+turnR*sin(zeta);
     
     
@@ -154,14 +154,16 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         vf.avfWeight = 1/8*activationFunctions(alpha,'a');
         
         %Weight convergence term of repulsive field
-        g = -velocity*cos(abs(beta));
+        g = -velocity*cos(abs(beta))-abs(1/((range-obstR)*velocity));
         if g>0
-            g=0;
+            g = 0;
         end
         vf.rvf{1}.G = g;
         
+        
         %Switch to attractive field when exiting avoidance region
-        if alpha <= atan2( Y_turn,abs(X)-uav.turn_radius)
+%         if alpha <= atan2( Y_turn,abs(X_turn)-uav.turn_radius)
+        if uav.y<=Y_turn && uav.x>=X_turn
             vf.avfWeight = 1;
             vf.rvfWeight = 0;
         end
@@ -204,7 +206,7 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
      
     if plotFlight == true && plotFinal == true
         
-        vf = vf.xydomain((uav.turn_radius*gamma+obstR)*1.1,0,0,40);
+         vf = vf.xydomain((uav.turn_radius*gamma+obstR)*1.1,0,0,40);
         vf.NormSummedFields = true;
         uav.colorMarker = 'k-';
         
@@ -247,35 +249,35 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         
         % ======================= Singularity Detection =================%
-        options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
-        ops.m = 10;
-        ops.n = 10;
-        ops.xlimit = 10;
-        ops.ylimit = 10;
-        ops.r = obstR;
-        ops.d_theta = deg2rad(10);
-        XYS = icPoints('circle',ops);
-        
-        fun = @(X) magVF(X,vf);
-        location = cell(1,length(XYS));
-        gradMag  = cell(1,length(XYS));
-        solverFlag = cell(1,length(XYS));
-        
-        for i =1:length(XYS)
-            X0 = [XYS(1,i),XYS(2,i)];
-            [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
-        end
-                    for i =1:length(XYS)
-                        x0 = XYS(1,i);
-                        y0 = XYS(2,i);
-                        x = location{i};
-                        if solverFlag{i} == -2
-                        elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
-        %                     p4 = plot(x0,y0,'ko','markersize',7);
-                            p7 = plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
-        %                     p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
-                        end
-                    end
+%         options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
+%         ops.m = 10;
+%         ops.n = 10;
+%         ops.xlimit = 10;
+%         ops.ylimit = 10;
+%         ops.r = obstR;
+%         ops.d_theta = deg2rad(10);
+%         XYS = icPoints('circle',ops);
+%         
+%         fun = @(X) magVF(X,vf);
+%         location = cell(1,length(XYS));
+%         gradMag  = cell(1,length(XYS));
+%         solverFlag = cell(1,length(XYS));
+%         
+%         for i =1:length(XYS)
+%             X0 = [XYS(1,i),XYS(2,i)];
+%             [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
+%         end
+%                     for i =1:length(XYS)
+%                         x0 = XYS(1,i);
+%                         y0 = XYS(2,i);
+%                         x = location{i};
+%                         if solverFlag{i} == -2
+%                         elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
+%         %                     p4 = plot(x0,y0,'ko','markersize',7);
+%                             p7 = plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
+%         %                     p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
+%                         end
+%                     end
         p2 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
         p3 =plot(uav.xs(end),uav.ys(end),'dr','markersize',10,'markerfacecolor','r'); 
         p5 =plot([uav.xs(1),uav.xs(end)],[0,0],'g','linewidth',3);
@@ -328,9 +330,7 @@ if plotFinal == true
             %                     p4 = plot(x0,y0,'ko','markersize',7);
             p7 = plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
             %                     p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
-        end
-        
-        
+        end      
     end
     
     p2 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');

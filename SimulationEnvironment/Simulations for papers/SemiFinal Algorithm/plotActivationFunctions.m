@@ -6,7 +6,7 @@
 clc
 clear 
 close all
-theta = 0:0.01:2*pi;
+theta = -2*pi:0.01:2*pi;
 
 
 for i =1:length(theta)
