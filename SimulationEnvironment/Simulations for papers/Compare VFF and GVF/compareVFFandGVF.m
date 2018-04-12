@@ -1,5 +1,5 @@
 %=========================================================================
-% numericallySolveGammaAndH.m
+% compareVFFandGVF.m
 %
 %
 %==========================================================================
@@ -11,19 +11,10 @@ clear
 close all
 
 
-obstRs = [0,100,1000];
-obstYs = [0,-100,-500];
-% for i = 1:length(obstRs)
-% for i=1:length(obstYs)
- 
-    
 %Setup basic vehicle and obstacle parameters
-v = 50;
-obstR = v/0.35;
-obstY = 0;
-% obstY = obstYs(i);
-
-%    obstR = v/0.35 + obstRs(i);
+v = 25;
+obstR = v/0.35+400;
+obstY = -100;
 
 %Time step
 dt = 0.1;
@@ -32,10 +23,8 @@ dt = 0.1;
 tr = v/0.35;                                %Turn radius
 lbGamma = (obstR / (tr));                   %Repulsive field no smaller than obstacle's radius
 
-
 plotFinal = false;
-fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
-
+fr = @(X) GVF(X,v,dt,plotFinal,obstR,obstY);
 
 %Optimization options
 options = optimoptions('fmincon','Display','final-detailed');
@@ -58,30 +47,9 @@ tic
 sim_time = toc;
 
 disp(Xsolved)
-obstYS = linspace(0,-1000,10);
-obstYS = 0;
-
-Vs = [25,50,100];
-
-
-
-
-for i = 1:length(Vs)
-
-
-    %FOR MULTIPLE VELOCITIES
-    v = Vs(i);
-    obstR = v/0.35;
-    
-
-    
-
-
-
-
 plotFinal = true;
-h(i) = figure('pos',[10 10 900 600]);
-fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
+figure('pos',[10 10 900 600]);
+fr = @(X) GVF(X,v,dt,plotFinal,obstR,obstY);
 cost = fr(Xsolved);
 disp(Xsolved)
 disp(cost)
@@ -92,16 +60,11 @@ set(gca,'fontsize',12);
 xlabel('East (m)');
 ylabel('North (m)');
 
-if saveFigure
-   saveas(h(i),strcat('Vs',num2str(floor(vel))),'epsc');
-end
-
-end
 
 
 
+function cost = GVF(X,velocity,dt,plotFinal,obstR,obstY)
 
-function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
 plotFlight = false;
 
@@ -116,7 +79,7 @@ vf = vectorField();
 vf = vf.navf('line');
 vf.avf{1}.angle = pi/2;
 vf.NormSummedFields = false;
-vf.avf{1}.H = velocity;
+vf.avf{1}.H = velocity+obstR;
 vf.avf{1}.normComponents = false;
 vf.normAttractiveFields = false;
 
@@ -166,8 +129,14 @@ BETA = [];
 ALPHA = [];
 GS = [];
 
-while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
-    
+uav2 = uav;
+VFF = vff();
+VFF = VFF.setup([(uav.turn_radius*gamma+obstR)*1.1,1],[0,obstY]);
+VFF.detectionRadius = obstR+uav2.turn_radius;
+
+while uav.x<=(uav.turn_radius*gamma+obstR)*1.1 %|| uav2.x<(uav.turn_radius*gamma+obstR)*1.1
+
+    if uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     %Weighting function independent variables
     alpha = atan2(uav.y-obstY,uav.x);
     beta = pi - alpha+uav.heading;
@@ -185,11 +154,16 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     
     
     %If inside avoidance region, weight functions
-    if abs(uav.x)<= abs(X*1.02)
+    if abs(uav.x)<= abs(X*1.02) && alpha > atan2(Y_turn,X_turn)
         
         %Weight attractive and repulsive fields
         vf.rvfWeight = 1*activationFunctions(alpha,'r');
         vf.avfWeight = 1/8*activationFunctions(alpha,'a');
+        
+        vf.rvfWeight = 1;
+        vf.avfWeight = 1/8;
+        
+        
         
         %Weight convergence term of repulsive field
         g = -velocity*cos(abs(beta))-abs(1/((range-obstR)*velocity));
@@ -200,8 +174,8 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         
         %Switch to attractive field when exiting avoidance region
-%         if alpha <= atan2( Y_turn,abs(X_turn)-uav.turn_radius)
-        if uav.y<=Y_turn && uav.x>=X_turn
+        if alpha <= atan2( Y_turn,abs(X_turn)-uav.turn_radius)
+% %         if uav.y<=Y_turn && uav.x>=X_turn
             vf.avfWeight = 1;
             vf.rvfWeight = 0;
         end
@@ -223,6 +197,10 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     [u,v]=vf.heading(uav.x,uav.y);
     heading_cmd = atan2(v,u);
     uav = uav.update_pos(heading_cmd);
+    end
+    
+    VFF = VFF.heading(uav2.x,uav2.y);
+    uav2 = uav2.update_pos(VFF.cmd_heading);
 
     
     % =============== COST ================= %
@@ -321,6 +299,10 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         p5 =plot([uav.xs(1),uav.xs(end)],[0,0],'g','linewidth',3);
         p6 =plot(obstx,obsty,'r','linewidth',2);
         p4 = uav.pltUAV();
+        
+        
+                p99 = uav2.pltUAV();
+
         axis([-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1,-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1]);
         drawnow();   
     end
@@ -383,7 +365,8 @@ if plotFinal == true
     axis equal
     grid on
     axis([-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1,-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1]);
-    
+            p99 = uav2.pltUAV();
+
     legend([p2,p3,p4,p5,p6],{'UAV Start','UAV End','UAV Path','Planned Path','Obstacle'});%,'Obstacle','UAV Path','Singularity'});
     
     
@@ -401,6 +384,8 @@ F(1) = U;
 F(2) = V;
 
 end
+
+
 
 
 

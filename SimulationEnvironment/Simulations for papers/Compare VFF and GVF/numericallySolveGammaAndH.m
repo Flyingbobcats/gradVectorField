@@ -18,9 +18,9 @@ obstYs = [0,-100,-500];
  
     
 %Setup basic vehicle and obstacle parameters
-v = 25;
-obstR = v/0.35+500;
-obstY = -300;
+v = 50;
+obstR = v/0.35;
+obstY = 0;
 % obstY = obstYs(i);
 
 %    obstR = v/0.35 + obstRs(i);
@@ -61,7 +61,7 @@ disp(Xsolved)
 obstYS = linspace(0,-1000,10);
 obstYS = 0;
 
-Vs = [25];
+Vs = [100];
 
 
 
@@ -71,7 +71,7 @@ for i = 1:length(Vs)
 
     %FOR MULTIPLE VELOCITIES
     v = Vs(i);
-    obstR = v/0.35+500;
+    obstR = v/0.35;
     
 
     
@@ -206,10 +206,10 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         %Switch to attractive field when exiting avoidance region
 %         if alpha <= atan2( Y_turn,abs(X_turn)-uav.turn_radius)
-%         if uav.y<=Y_turn && uav.x>=X_turn
-%             vf.avfWeight = 1;
-%             vf.rvfWeight = 0;
-%         end
+        if uav.y<=Y_turn && uav.x>=X_turn
+            vf.avfWeight = 1;
+            vf.rvfWeight = 0;
+        end
     else
         vf.avfWeight = 1;
         vf.rvfWeight = 0;
@@ -238,8 +238,7 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     end
     
     %Pentalize for deviating path
-%     cost = cost+ abs(uav.y) / ((vf.rvf{1}.decayR))*dt;
-        cost = cost+ abs(uav.y) / ((obstR))*dt;
+    cost = cost+ abs(uav.y) / ((vf.rvf{1}.decayR))*dt;
     
     
     %Pentalize for entering obstacle region

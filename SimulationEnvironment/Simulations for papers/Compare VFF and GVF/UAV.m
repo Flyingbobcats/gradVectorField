@@ -168,7 +168,7 @@ classdef UAV
             end
             
             if self.plotUAVPath
-                fig = plot(self.xs,self.ys,self.colorMarker,'linewidth',5);
+                fig = plot(self.xs,self.ys,self.colorMarker,'linewidth',2);
             end
             
             if self.plotHeading

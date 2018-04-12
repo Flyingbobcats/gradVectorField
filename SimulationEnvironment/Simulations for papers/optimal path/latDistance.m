@@ -43,7 +43,7 @@ while posx < 20
     
     clf
     hold on
-    plot([posx,location(1)],[posy,location(2)],'g');
+    plot([posx,optPathX(location)],[posy,optPathY(location)],'g');
     plot(optPathX,optPathY,'k.');
     plot(posx,posy,'b*');
     title(num2str(dist));
