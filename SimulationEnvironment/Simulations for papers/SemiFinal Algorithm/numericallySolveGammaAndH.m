@@ -18,9 +18,9 @@ obstYs = [0,-100,-500];
  
     
 %Setup basic vehicle and obstacle parameters
-v = 25;
-obstR = v/0.35+500;
-obstY = -300;
+v = 50;
+obstR = v/0.35+10;
+obstY = 0;
 % obstY = obstYs(i);
 
 %    obstR = v/0.35 + obstRs(i);
@@ -42,26 +42,27 @@ options = optimoptions('fmincon','Display','final-detailed');
 options.DiffMinChange = 0.1;
 options.DiffMaxChange = 1;
 % options.PlotFcn = @optimplotfval;
-options.StepTolerance = 1e-5;
+options.StepTolerance = 1e-4;
 
-x0 = [lbGamma,2];
+x0 = [lbGamma*2];
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma,1];
-ub = [lbGamma*2,6];
+lb = [lbGamma*2];
+ub = [lbGamma*3];
 
 saveFigure = true;
 tic
 [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
 sim_time = toc;
 
+
 disp(Xsolved)
 obstYS = linspace(0,-1000,10);
 obstYS = 0;
 
-Vs = [25];
+Vs = v;
 
 
 
@@ -71,7 +72,7 @@ for i = 1:length(Vs)
 
     %FOR MULTIPLE VELOCITIES
     v = Vs(i);
-    obstR = v/0.35+500;
+%     obstR = v/0.35+500;
     
 
     
@@ -103,11 +104,11 @@ end
 
 function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
-plotFlight = false;
+plotFlight = true;
 
 %Parameters to solve for
 gamma = X(1);
-H = X(2);
+H = 1;
 
 %Setup vector field
 vf = vectorField();
@@ -124,7 +125,7 @@ vf.normAttractiveFields = false;
 %Obstacle
 vf = vf.nrvf('circ');
 vf.rvf{1}.r = 0.01;
-vf.rvf{1}.H = H;
+vf.rvf{1}.H = 1;
 vf.rvf{1}.G = -1;
 vf.rvf{1}.y = obstY;
 
@@ -189,10 +190,10 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         %Weight attractive and repulsive fields
         vf.rvfWeight = 1*activationFunctions(alpha,'r');
-        vf.avfWeight = 1/8*activationFunctions(alpha,'a');
+        vf.avfWeight = 1/2*activationFunctions(alpha,'a');
         
         vf.rvfWeight = 1;
-        vf.avfWeight = 1/8;
+        vf.avfWeight = 1/2;
         
         
         
@@ -206,10 +207,10 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         %Switch to attractive field when exiting avoidance region
 %         if alpha <= atan2( Y_turn,abs(X_turn)-uav.turn_radius)
-%         if uav.y<=Y_turn && uav.x>=X_turn
-%             vf.avfWeight = 1;
-%             vf.rvfWeight = 0;
-%         end
+        if uav.y<=Y_turn && uav.x>=X_turn
+            vf.avfWeight = 1;
+            vf.rvfWeight = 0;
+        end
     else
         vf.avfWeight = 1;
         vf.rvfWeight = 0;
@@ -284,7 +285,7 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         hold on
         plot(optPath(:,1),optPath(:,2),'b.');
-        vf.pltff();
+%         vf.pltff();
         vf.rvf{1}.pltDecay();
         
         title(num2str(cost));
@@ -292,36 +293,36 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         grid on
         
         
-        % ======================= Singularity Detection =================%
-%         options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
-%         ops.m = 10;
-%         ops.n = 10;
-%         ops.xlimit = 10;
-%         ops.ylimit = 10;
-%         ops.r = obstR;
-%         ops.d_theta = deg2rad(10);
-%         XYS = icPoints('circle',ops);
-%         
-%         fun = @(X) magVF(X,vf);
-%         location = cell(1,length(XYS));
-%         gradMag  = cell(1,length(XYS));
-%         solverFlag = cell(1,length(XYS));
-%         
-%         for i =1:length(XYS)
-%             X0 = [XYS(1,i),XYS(2,i)];
-%             [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
-%         end
-%                     for i =1:length(XYS)
-%                         x0 = XYS(1,i);
-%                         y0 = XYS(2,i);
-%                         x = location{i};
-%                         if solverFlag{i} == -2
-%                         elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
-%         %                     p4 = plot(x0,y0,'ko','markersize',7);
-%                             p7 = plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
-%         %                     p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
-%                         end
-%                     end
+%         ======================= Singularity Detection =================%
+        options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
+        ops.m = 10;
+        ops.n = 10;
+        ops.xlimit = 10;
+        ops.ylimit = 10;
+        ops.r = obstR;
+        ops.d_theta = deg2rad(10);
+        XYS = icPoints('circle',ops);
+        
+        fun = @(X) magVF(X,vf);
+        location = cell(1,length(XYS));
+        gradMag  = cell(1,length(XYS));
+        solverFlag = cell(1,length(XYS));
+        
+        for i =1:length(XYS)
+            X0 = [XYS(1,i),XYS(2,i)];
+            [location{i},gradMag{i},solverFlag{i}] = fsolve(fun,X0,options);
+        end
+                    for i =1:length(XYS)
+                        x0 = XYS(1,i);
+                        y0 = XYS(2,i);
+                        x = location{i};
+                        if solverFlag{i} == -2
+                        elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
+        %                     p4 = plot(x0,y0,'ko','markersize',7);
+                            p7 = plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
+        %                     p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
+                        end
+                    end
         p2 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
         p3 =plot(uav.xs(end),uav.ys(end),'dr','markersize',10,'markerfacecolor','r'); 
         p5 =plot([uav.xs(1),uav.xs(end)],[0,0],'g','linewidth',3);

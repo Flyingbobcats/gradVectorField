@@ -8,11 +8,11 @@ classdef vff
     obstPosX = []
     obstPosY = []
     
-    Fcr = -2
+    Fcr = -3
     Fct = 0.8
     
     detectionRadius = 7.5
-    width = 5
+    width = 30
     n = 2
     
     c = 0

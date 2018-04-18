@@ -21,7 +21,7 @@ close all
 
 %Setup basic vehicle and obstacle parameters
 v = 25;
-obstR = v/0.35+500;
+obstR = v/0.35+200;
 obstY = 0;
 
 %Time step
@@ -56,18 +56,20 @@ tic
 [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
 sim_time = toc;
 plotFinal = true;
+
 figure('pos',[10 10 900 600]);
 fr = @(X) GVF(X,v,dt,plotFinal,obstR,obstY);
 cost = fr(Xsolved);
-title(strcat('cost = ',num2str(cost)));
 set(gca,'fontsize',12);
 xlabel('East (m)');
 ylabel('North (m)');
 
 
-x = -700;
+x = -(v/0.35*Xsolved(1)+obstR)*1.1;
 y = 0;
-WPguidance(25,x,y,obstR,0,obstY,dt);
+figure('pos',[10 10 900 600]);
+WPguidance(25,x,y,obstR,0,obstY,dt,Xsolved(1));
+figure('pos',[10 10 900 600]);
 VFFguidance(v,x,y,obstR,0,obstY,dt,Xsolved(1))
 
 function GVFcost = GVF(X,velocity,dt,plotFinal,obstR,obstY)
@@ -163,7 +165,6 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     
     %If inside avoidance region, weight functions
     if abs(uav.x)<= abs(X*1.02) && alpha > atan2(Y_turn,X_turn)
-        
         %Weight attractive and repulsive fields
         vf.rvfWeight = 1*activationFunctions(alpha,'r');
         vf.avfWeight = 1/8*activationFunctions(alpha,'a');
@@ -182,8 +183,8 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         
         %Switch to attractive field when exiting avoidance region
-        if alpha <= atan2( Y_turn,abs(X_turn)-uav.turn_radius)
-% %         if uav.y<=Y_turn && uav.x>=X_turn
+
+        if uav.y<=Y_turn && uav.x>=X_turn
             vf.avfWeight = 1;
             vf.rvfWeight = 0;
         end
@@ -387,7 +388,7 @@ F(2) = V;
 end
 
 
-function WPguidance(velocity,x0,y0,obstR,obstX,obstY,dt)
+function WPguidance(velocity,x0,y0,obstR,obstX,obstY,dt,gamma)
 
 uav = UAV();
 uav.plotHeading = false;
@@ -408,7 +409,7 @@ wpMan = wpt();
 wpMan.WPradius = 20;
 optWaypoints = waypointPlanner(uav,obstR+wpMan.WPradius,obstX,obstY,20);
 wpMan = wpMan.setup(optWaypoints);
-wpMan.WPx(end+1)=700;
+wpMan.WPx(end+1)=(uav.turn_radius*gamma+obstR)*1.1;
 wpMan.WPy(end+1) = 0;
 
 ERROR = [];
@@ -439,10 +440,12 @@ while wpMan.currentWP <= length(wpMan.WPx) && wpMan.active
     
 end
 
+
+
 %Obstacle (no fly zone radius)
 obstx = obstR*cos(0:0.1:2.1*pi)+obstX;
 obsty = obstR*sin(0:0.1:2.1*pi)+obstY;
-figure
+
 hold on
 p6 =plot(obstx,obsty,'b','linewidth',2);
 
@@ -477,11 +480,7 @@ legend([p2,p3,p4,p5,p6],{'UAV Start','UAV End','UAV Path','Planned Path','Obstac
 
 
 str = strcat('WPT: cost = ',num2str(sum(COST)),{'  '},'RMS Error = ', num2str(rms(ERROR)));
-
 title(str);
-disp(str)
-
-disp(str)
 end
 
 function VFFguidance(velocity,x0,y0,obstR,obstX,obstY,dt,gamma)
@@ -496,6 +495,8 @@ uav.plotUAVPath = true;
 uav.plotFlightEnv = false;
 uav = uav.setup(x0, y0,velocity, 0, dt);
 
+obstx = obstR*cos(0:0.1:2.1*pi)+obstX;
+obsty = obstR*sin(0:0.1:2.1*pi)+obstY;
 
 
 optPath = genOptPath(uav,obstR,obstX,obstY);
@@ -520,11 +521,15 @@ X_turn = (-X+turnR*cos(zeta));
 Y_turn = y+turnR*sin(zeta);
 
 %    while abs(uav.x)<= abs(X*1.02) && alpha > atan2(Y_turn,X_turn)
-while uav.x<200
+while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
     alpha = atan2(uav.y-obstY,uav.x);
     VFF = VFF.heading(uav.x,uav.y);
     
     uav = uav.update_pos(VFF.cmd_heading);
+    
+    if uav.y>y
+        VFF.detectionRadius = obstR*1.1;
+    end
     
     if abs(uav.x)<= abs(X*1.02) && alpha > atan2(Y_turn,X_turn)
         [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath);
@@ -534,16 +539,35 @@ while uav.x<200
     
 end
 
-figure
+        uav.colorMarker = 'k--';
 hold on
 uav.pltUAV();
-plot(optPath(:,1),optPath(:,2),'b');
+
+    p2 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
+    p3 =plot(uav.xs(end),uav.ys(end),'dr','markersize',10,'markerfacecolor','r');
+    
+    
+    p5 =plot([uav.xs(1),uav.xs(end)],[0,0],'g','linewidth',3);
+    p6 =plot(obstx,obsty,'b','linewidth',2);
+    %     p7 = plot(x(1,1),x(1,2),'ro','markersize',5,'markerfacecolor','r');
+    
+    plot(optPath(:,1),optPath(:,2),'r-','linewidth',5);
+    p4 = uav.pltUAV();
+    axis equal
+    grid on
+    axis([-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1,-(uav.turn_radius*gamma+obstR)*1.1,(uav.turn_radius*gamma+obstR)*1.1]);
+    
+    legend([p2,p3,p4,p5,p6],{'UAV Start','UAV End','UAV Path','Planned Path','Obstacle'});%,'Obstacle','UAV Path','Singularity'});
+
+
+
 axis equal
 grid on
-drawnow()
 
 
-str = strcat('WPT: cost = ',num2str(sum(COST)),{'  '},'RMS Error = ', num2str(rms(ERROR)));
+
+str = strcat('VFF: cost = ',num2str(sum(COST)),{'  '},'RMS Error = ', num2str(rms(ERROR)));
+title(str);
 disp(str)
 
 
