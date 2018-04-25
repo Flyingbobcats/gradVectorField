@@ -9,63 +9,85 @@
 clc
 clear
 close all
+ns = 1:3:10;
+vs = 10:20:100;
 
-vs = 10:10:100;
+NS = [];
+VS = [];
+COSTS = [];
+XSOLVED = {};
+
+
+
+for k = 1:length(ns)
 for j=1:length(vs)
     figure
-v = vs(j);
-obstR = v/0.35;
+    n = ns(k);
+    v = vs(j);
+
+obstR = n*v/0.35;
 obstY = 0;
 tr = v/0.35;
-lbGamma = (obstR / (tr));
-dt = 0.1;
+dt = 0.01;
 
 plotFinal = false;
 
-fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
+fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY,n);         %Find min with respect to r
 
 
 
-options = optimoptions('fmincon','Display','final-detailed');
-options.DiffMinChange = 0.01;
-options.DiffMaxChange = 0.1;
+options = optimoptions('fmincon','Display','off');
+options.DiffMinChange = 0.1;
+options.DiffMaxChange = 0.2;
 % options.PlotFcn = @optimplotfval;
-options.StepTolerance = 1e-3;
+options.StepTolerance = 1e-5;
 
-x0 = [lbGamma*1.5,2];
+x0 = [3,2.8];
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma,0.1];
-ub = [lbGamma*2,6];
+lb = [2.5,2.5];
+ub = [3.5,4];
 
 
 
 tic
-[Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
+% [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
 sim_time = toc;
 
-Xsolved = [2.1723,3.0449];
+Xsolved = [2.5,3];
 
 
 plotFinal = true;
-fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
+fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY,n);
 cost = fr(Xsolved);
-disp(Xsolved)
-disp(cost)
-str = strcat('\gamma = ',num2str(Xsolved(1)),{' '}, 'h=',num2str(Xsolved(2)),{' '},'cost=',num2str(cost),{' '},'time=',num2str(sim_time));
+% disp(Xsolved)
+% disp(cost)
+str = strcat('h = ',num2str(Xsolved(1)),{' '}, '\gamma=',num2str(2*n),{' '},'cost=',num2str(cost),{' '},'time=',num2str(sim_time),'k=',num2str(Xsolved(2)));
 title(str)
+
+NS(k,j) = ns(k);
+VS(k,j) = vs(j);
+COSTS(k,j) = cost;
+XSOLVED{k,j} = Xsolved;
+
+
+end
+    clc
+    str = strcat('Percent complete:', num2str((k)/(length(ns))*100));
+    disp(str);
 end
 
 
 
 
 
-function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
+function cost = VF(X,velocity,dt,plotFinal,obstR,obstY,n)
 
-    gamma = X(1);
-    H = X(2);
+    k = X(2);
+    H = X(1);
+    gamma = 2*n;
 
     %Setup vector field
         vf = vectorField();
@@ -76,7 +98,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         vf = vf.navf('line');
         vf.avf{1}.angle = pi/2;
         vf.NormSummedFields = false;
-        vf.avf{1}.H = 2*H*velocity^1/2;%*velocity;
+%         vf.avf{1}.H = 2*H*velocity^1/2;%*velocity;
         vf.avf{1}.H = obstR;
         vf.avf{1}.normComponents = false;
         vf.normAttractiveFields = false;
@@ -123,7 +145,9 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         %Set decay field strength based on gamma ratio, plus obstacles
         %radius
         
-        vf.rvf{1}.decayR = uav.turn_radius*gamma+obstR;
+%         vf.rvf{1}.decayR = uav.turn_radius*gamma+obstR;
+%         vf.rvf{1}.decayR = uav.turn_radius*(3*n);
+        vf.rvf{1}.decayR = uav.turn_radius*(k*n);
         
         vf.rvf{1} = vf.rvf{1}.modDecay('hyper');
         

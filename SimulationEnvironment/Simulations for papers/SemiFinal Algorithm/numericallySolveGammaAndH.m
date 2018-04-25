@@ -18,8 +18,8 @@ obstYs = [0,-100,-500];
  
     
 %Setup basic vehicle and obstacle parameters
-v = 50;
-obstR = v/0.35+10;
+v = 0.25;
+obstR = v/0.35;
 obstY = 0;
 % obstY = obstYs(i);
 
@@ -39,7 +39,7 @@ fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);
 
 %Optimization options
 options = optimoptions('fmincon','Display','final-detailed');
-options.DiffMinChange = 0.1;
+options.DiffMinChange = 0.01;
 options.DiffMaxChange = 1;
 % options.PlotFcn = @optimplotfval;
 options.StepTolerance = 1e-4;
@@ -49,7 +49,7 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma*2];
+lb = [lbGamma];
 ub = [lbGamma*3];
 
 saveFigure = true;
@@ -104,7 +104,7 @@ end
 
 function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
 
-plotFlight = true;
+plotFlight = false;
 
 %Parameters to solve for
 gamma = X(1);
@@ -198,7 +198,7 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         
         %Weight convergence term of repulsive field
-        g = -velocity*cos(abs(beta))-abs(1/((range-obstR)*velocity));
+        g = -(velocity+abs(1/((range-obstR))))*cos(abs(beta));%-abs(1/((range-obstR)*velocity));
         if g>0
             g = 0;
         end
@@ -285,7 +285,7 @@ while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
         
         hold on
         plot(optPath(:,1),optPath(:,2),'b.');
-%         vf.pltff();
+        vf.pltff();
         vf.rvf{1}.pltDecay();
         
         title(num2str(cost));

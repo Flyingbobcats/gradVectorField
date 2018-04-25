@@ -8,13 +8,46 @@ close all
 
 
 
-runCirc = true;
+runCirc = false;
 runGridDensity = false;
 runGridWidth = false;
 
-xs = -50:5:50;
-ys = xs;
+% xs = -50:1:50;
+% ys = xs;
+% 
+% for i=1:length(xs)
+%     for j = 1:length(ys)
+%         X = [xs(i),ys(j)];
+%         F = VF(X);
+%         US(i,j) = F(1);
+%         VS(i,j) = F(2);
+%         XS(i,j) = xs(i);
+%         YS(i,j) = ys(j);
+%         
+%         mag(i,j) = sqrt(US(i,j)^2+VS(i,j)^2);
+%         
+%         US(i,j) = US(i,j)/mag(i,j);
+%         VS(i,j) = VS(i,j)/mag(i,j);
+%     end
+% end
+% 
+% figure('pos',[10 10 800 800]);
+% surf(XS,YS,mag)
+% 
+% xlabel('x');
+% ylabel('y');
+% 
+% h = colorbar;
+% ylabel(h, 'Vector Magnitude')
+% shading interp
+% view([0,90])
+% set(gca,'fontsize',12);
+% axis equal
+% axis([-50,50,-50,50]);
 
+xs = -50:3:50;
+ys = xs;
+hold on
 for i=1:length(xs)
     for j = 1:length(ys)
         X = [xs(i),ys(j)];
@@ -23,6 +56,8 @@ for i=1:length(xs)
         VS(i,j) = F(2);
         XS(i,j) = xs(i);
         YS(i,j) = ys(j);
+        ZS(i,j) = 3;
+        WS(i,j) = 0;
         
         mag(i,j) = sqrt(US(i,j)^2+VS(i,j)^2);
         
@@ -31,9 +66,7 @@ for i=1:length(xs)
     end
 end
 
-figure
-surf(XS,YS,mag)
-
+quiver3(XS,YS,ZS,US,VS,WS,'k');
 
 
 if runCirc

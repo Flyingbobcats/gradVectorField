@@ -10,12 +10,19 @@ clc
 clear
 close all
 
-vs = 10:10:100;
-for j=1:length(vs)
-    figure
-v = vs(j);
+vs = 20:20:200;
+lateralD = 0:20:200;
+
+
+
+% for i=1:length(vs)
+for i=1:length(lateralD)
+figure
+% v = vs(i);
+v = 50;
 obstR = v/0.35;
 obstY = 0;
+obstY = lateralD(i);
 tr = v/0.35;
 lbGamma = (obstR / (tr));
 dt = 0.1;
@@ -25,28 +32,27 @@ plotFinal = false;
 fr = @(X) VF(X,v,dt,plotFinal,obstR,obstY);         %Find min with respect to r
 
 
-
-options = optimoptions('fmincon','Display','final-detailed');
+% 
+% options = optimoptions('fmincon','Display','final-detailed');
+options = optimoptions('fmincon','Display','off');
 options.DiffMinChange = 0.01;
 options.DiffMaxChange = 0.1;
 % options.PlotFcn = @optimplotfval;
-options.StepTolerance = 1e-3;
+options.StepTolerance = 1e-8;
 
-x0 = [lbGamma*1.5,2];
+x0 = [lbGamma*1.5,-2];
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-lb = [lbGamma,0.1];
-ub = [lbGamma*2,6];
+lb = [lbGamma,-6];
+ub = [lbGamma*2,-2];
 
 
 
 tic
 [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
 sim_time = toc;
-
-Xsolved = [2.1723,3.0449];
 
 
 plotFinal = true;
@@ -111,8 +117,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         uav.plotCmdHeading = false;
         uav.plotUAV = false;
         uav.plotUAVPath = true;
-        uav.plotFlightEnv = false;
-        uav.colorMarker = 'k--';
+        uav.plotFlightEnv = true;
         
         
 
@@ -131,6 +136,7 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
         cost = 0;
 
     cost = 0;
+  
     while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
 
         [u,v]=vf.heading(uav.x,uav.y);
@@ -152,29 +158,24 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY)
             cost = cost+100;
         end
 
-      
-    end
-      if plotFinal == true
+        if plotFinal == true
+            
             clf
+            
             hold on
-
-            plot(obstx,obsty,'r','linewidth',2);
-            plot(uav.xs(1),uav.ys(1),'d','markersize',10,'markerfacecolor','b');
-            plot([-250,250],[0,0],'g','linewidth',2);
+            vf.rvf{1}.pltDecay();
+           plot(obstx,obsty,'b');
             uav.pltUAV();
             
-            xlabel('x');
-            ylabel('y');
-            set(gca,'fontsize',12);
-
+            %                 str = strcat('velocity = ',num2str(vs(j)), ' cost= ',num2str(cost),'\gamma=',num2str(gamma),'h=',num2str(h));
+            %                 title(str);
+            
+            axis([-700,700,-700,700]);
             axis equal
+            pause(0.001)
             grid on
-
-            
-            
-            legend({'Obstacle','UAV Start','Pre-planned Path','UAV Path'});
             end
-    
+    end
 
 end
 
