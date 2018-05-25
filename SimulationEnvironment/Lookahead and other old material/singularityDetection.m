@@ -31,47 +31,15 @@ for i=1:length(xs)
     end
 end
 
-figure('pos',[10 10 800 800]);
+figure
 surf(XS,YS,mag)
 
-xlabel('x');
-ylabel('y');
-
-h = colorbar;
-ylabel(h, 'Vector Magnitude')
-shading interp
-view([0,90])
-set(gca,'fontsize',12);
-axis equal
-axis([-50,50,-50,50]);
-
-
-hold on
-for i=1:length(xs)
-    for j = 1:length(ys)
-        X = [xs(i),ys(j)];
-        F = VF(X);
-        US(i,j) = F(1);
-        VS(i,j) = F(2);
-        XS(i,j) = xs(i);
-        YS(i,j) = ys(j);
-        ZS(i,j) = 3;
-        WS(i,j) = 0;
-        
-        mag(i,j) = sqrt(US(i,j)^2+VS(i,j)^2);
-        
-        US(i,j) = US(i,j)/mag(i,j);
-        VS(i,j) = VS(i,j)/mag(i,j);
-    end
-end
-
-% quiver3(XS,YS,ZS,US,VS,WS,'k');
 
 
 if runCirc
 %Circular field
 options = optimoptions('fsolve','Display','off','Algorithm','levenberg-marquardt');%,'UseParallel',true);
-R = 35;
+R = 10:1:30;
 
 
 figure
@@ -94,9 +62,9 @@ for j = 1:length(R)
     
 %     subplot(length(R)/5,5,j)
 
-      figure
+
     hold on
-    p9 = quiver(XS,YS,US,VS);
+    quiver(XS,YS,US,VS);
     
     
     
@@ -113,7 +81,6 @@ for j = 1:length(R)
     cys = 35/2*sin(theta);
 %     title(str)
     p7 = plot(cxs,cys,'r--','linewidth',2);
-    p8 = plot([-50,60],[0,0],'g','linewidth',3);
 
     
  
@@ -122,24 +89,20 @@ for j = 1:length(R)
         y0 = XYS(2,i);
         x = location{i};
         if solverFlag{i} == -2
-%             p1 = plot(x0,y0,'ro','markersize',7);
-%             p2 = plot(x(1),x(2),'r.','markersize',30);
-%             p3 = plot([x(1),x0],[x(2),y0],'r--','markersize',15);
+            p1 = plot(x0,y0,'ro','markersize',7);
+            p2 = plot(x(1),x(2),'r.','markersize',30);
+            p3 = plot([x(1),x0],[x(2),y0],'r--','markersize',15);
         elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
-%             p4 = plot(x0,y0,'ko','markersize',7);
+            p4 = plot(x0,y0,'ko','markersize',7);
             p5 =plot(x(1),x(2),'k.','markersize',20);
-%             p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
+            p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
         end
         axis equal
         axis([-50,50,-50,50]);
         
         
     end
-    legend([p9,p7,p5,p8],{'Guidance Vector','Equal Strength','Singularity','Path'});
-    xticks(-50:10:50);
-    yticks(-50:10:50);
-    axis([-50,50,-50,50]);
-    set(gca,'fontsize',12);
+    legend([p7,p4,p5],{'Equal Strength','Initial Condition','Minimum'});
     xlabel('x');
     ylabel('y');
 end
@@ -274,48 +237,45 @@ function F = VF(X)
 %Compute values of each vector component
 x = X(1);
 y = X(2);
-vf = vectorField();
+%Constants
+theta = deg2rad(90);
+a = cos(theta);
+b = sin(theta);
 
-vf = vf.xydomain(50,0,0,20);
+xc = 0;
+yc = 0;
+r = 0.1;
 
-%Goal Path
-vf = vf.navf('line');
-vf.avf{1}.angle = pi/2;
-vf.NormSummedFields = false;
-vf.avf{1}.H = 5;
-vf.avf{1}.normComponents = false;
+decayR = 35;
 
 
+UG = -(a*x+b*y)*a+b;
+VG = -(a*x+b*y)*b-a;
+magG = sqrt(UG^2+VG^2);
 
-%Obstacle
-vf = vf.nrvf('circ');
-vf.rvf{1}.decayR = 35;
-vf.rvf{1}.r = 0.01;
-vf.rvf{1}.H = 1;
-vf.rvf{1}.G = -1;
-vf.rvf{1}.y = 0;
 
-[U,V] = vf.heading(x,y);
 
-F(1) = U;
-F(2) = V;
+H = 0;
+G = 1;
+
+UO = G*2*(x-xc)*((x-xc)^2+(y-yc)^2-r^2)+H*2*(y-yc);
+VO = G*2*(y-yc)*((x-xc)^2+(y-yc)^2-r^2)-H*2*(x-xc);
+magO = sqrt(UO^2+VO^2);
+
+
+ug = UG/magG;
+vg = VG/magG;
+
+uo = UO/magO;
+vo = VO/magO;
+
+r = sqrt((x-xc)^2+(y-yc)^2);
+p = -(tanh(2*pi*r/decayR-pi))+1;
+
+F(1) = ug+p*uo;
+F(2) = vg+p*vo;
 
 % mag = sqrt(F(1)^2+F(2)^2);
 % F(1) = F(1)/mag;
 % F(2) = F(2)/mag;
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

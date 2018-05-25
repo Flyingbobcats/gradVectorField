@@ -104,7 +104,7 @@ if summed
             
         end
         hold on
-        uav.colorMarker = 'r-';
+%         uav.colorMarker = 'r-';
         uav.pltUAV();
         
         pyUAVx = importfile('summed\UAVpathx',1,1000000);

@@ -17,11 +17,17 @@ COSTS = [];
 XSOLVED = {};
 
 
-ns = 1:1:5;
+ns = 1:0.5:5;
 vs = 1:20:100;
 
-ns = [1,2];
-vs = [20,100];
+ns = [1,2,3,4];
+vs = [10,20,30,40];
+
+ns = 1:0.5:5;
+vs = 10:2:100;
+
+ns = 1.5;
+vs = 10;
 
 % ks = 1:0.1:5;
 % hs = 1:0.1:10;
@@ -52,24 +58,24 @@ for k=1:length(vs)
         options.DiffMinChange = 0.01;
         options.DiffMaxChange = 0.2;
 %         options.PlotFcn = @optimplotfval;
-        options.StepTolerance = 1e-6;
+        options.StepTolerance = 1e-5;
         
-        x0 = [3,3];
+        x0 = [2.75,3];
         A = [];
         b = [];
         Aeq = [];
         beq = [];
-        lb = [2.5,2.85];
-        ub = [3.5,3.25];
+        lb = [2.5,3.2];
+        ub = [3,3.5];
         
         
         
         tic
-        [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
+%         [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
         sim_time = toc;
         
 %         Xsolved = [hs(j),ks(k)];
-%           Xsolved = [3.23,3.09];
+          Xsolved = [4,4];   %No circ example in thesis
         
         
         plotFinal = true;
@@ -80,7 +86,7 @@ for k=1:length(vs)
 %         str = strcat('h = ',num2str(Xsolved(1)),{' '}, '/gamma =',num2str(2*n),{' '},'cost=',num2str(cost),{' '},'time=',num2str(sim_time),'k=',num2str(Xsolved(2)));
         
         str = strcat('H = ',num2str(Xsolved(1)),{' '}, 'k = ', num2str(Xsolved(2)),{' '},'cost=',num2str(cost),{' '},'n = ', num2str(n));
-        title(str)
+%         title(str)
         
         
         
@@ -89,8 +95,8 @@ for k=1:length(vs)
 %         if cost>10
 %             cost = 10;
 %         end
-%         KS(k,j) = ks(k);
-%         HS(k,j) = hs(j);
+        KS(k,j) = Xsolved(2);
+        HS(k,j) = Xsolved(1);
         COSTS(k,j) = cost;
         XSOLVED{k,j} = Xsolved;
 %         
@@ -105,6 +111,27 @@ for k=1:length(vs)
         disp(str);
 end
 
+% figure
+% surf(VS,NS,HS);
+% xlabel('v');
+% ylabel('n');
+% zlabel('hs');
+% 
+% figure
+% surf(VS,NS,KS);
+% xlabel('v');
+% ylabel('n');
+% zlabel('ks');
+% 
+% 
+% figure;
+% surf(VS,NS,COSTS);
+% xlabel('v');
+% ylabel('n');
+% zlabel('costs');
+
+
+
 
 
 
@@ -113,12 +140,12 @@ function cost = VF(X,velocity,dt,plotFinal,obstR,obstY,n)
 
 k = X(2);
 H = X(1);
-gamma = 2*n;
+gamma = 1.75*n;
 
 %Setup vector field
 vf = vectorField();
 
-vf = vf.xydomain(200,0,0,50);
+vf = vf.xydomain(200,0,0,25);
 
 %Goal Path
 vf = vf.navf('line');
@@ -160,7 +187,7 @@ uav.plotCmdHeading = false;
 uav.plotUAV = false;
 uav.plotUAVPath = true;
 uav.plotFlightEnv = false;
-uav.colorMarker = 'k--';
+uav.colorMarker = 'k-';
 
 
 
@@ -181,7 +208,7 @@ vf.rvf{1} = vf.rvf{1}.modDecay('hyper');
 cost = 0;
 
 cost = 0;
-while uav.x<=(uav.turn_radius*gamma+obstR)*1.1
+while uav.x<=175
     
     [u,v]=vf.heading(uav.x,uav.y);
     heading_cmd = atan2(v,u);
@@ -208,11 +235,18 @@ if plotFinal == true
     clf
     hold on
     
-    plot(obstx,obsty,'r','linewidth',2);
-    plot(uav.xs(1),uav.ys(1),'d','markersize',10,'markerfacecolor','b');
-%     plot([-250,250],[0,0],'g','linewidth',2);
-    uav.pltUAV();
-%     vf.pltff();
+    vf.NormSummedFields = true;
+    vf.pltff();
+        p3 = plot([-250,250],[0,0],'g','linewidth',2);
+
+    
+    p1 = plot(obstx,obsty,'r','linewidth',2);
+    p2 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
+    p2 = plot(uav.xs(end),uav.ys(end),'s','markersize',10,'markerfacecolor','r');
+
+    p4 = uav.pltUAV();
+    vf.rvf{1}.pltEqualStrength();
+    
     
     xlabel('x');
     ylabel('y');
@@ -220,10 +254,13 @@ if plotFinal == true
     
     axis equal
     grid on
+    axis([-200,200,-100,100]);
     
     
     
-%     legend({'Obstacle','UAV Start','Pre-planned Path','UAV Path'});
+    
+    
+    legend({'Guidance','Planned Path','Obstacle','UAV Start','UAV End', 'UAV Path','Equal Strength'});
 end
 
 

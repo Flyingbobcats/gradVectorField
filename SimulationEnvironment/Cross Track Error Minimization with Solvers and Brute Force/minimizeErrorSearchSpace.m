@@ -13,7 +13,8 @@ clc
 clear
 close all
 
-f = @(X) VF(X);
+plt=false;
+f = @(X) VF(X,plt);
 
 % % options = optimoptions('fmincon','Display','final-detailed','Algorithm','interior-point','DiffMinChange',0.05,'PlotFcn',@optimplotfval);
 % options = optimoptions('fmincon','Display','final-detailed','Algorithm','interior-point');
@@ -36,8 +37,10 @@ f = @(X) VF(X);
 % h = fmincon(f,x0,A,b,Aeq,beq,lb,ub,[],options);
 % disp(h)
 
-decayRadii    = 5:0.001:10;
-circulations = 0.1:0.01:2;
+decayRadii    = 20/0.35:1:5*20/0.35;
+circulations = 0.5:0.1:3;
+
+
 
 tic
 costs = [];
@@ -50,7 +53,7 @@ for j = 1:length(decayRadii)
         costs(j,k) = cost;
     end
     
-    str = strcat(num2str(j/length(decayRadii)*100), ' % complete at_  ',num2str(toc/60),' minutes');
+    str = strcat(num2str(j/length(decayRadii)*100), ' % complete at  ',num2str(floor(toc/60)),' minutes');
     disp(str);
 end
 
@@ -69,57 +72,20 @@ zlabel('cost');
 
 
 
+plt = true;
+f = @(X) VF(X,plt);
 
-vf = vectorField();
+X = [r,h];
+f(X);
 
-%Goal Path
-vf = vf.navf('line');
-vf.avf{1}.angle = pi/2;
-vf.NormSummedFields = 0;
-vf.avf{1}.normComponents = true;
-vf.normAttractiveFields = false;
 
-%Obstacle
-vf = vf.nrvf('circ');
-vf.rvf{1}.r = 0.01;
-vf.rvf{1}.decayR = r(1);
-vf.rvf{1} = vf.rvf{1}.modDecay('hyper');
-vf.rvf{1}.H = h(1);
-
-ts = 0;
-tf = 25;
-dt = 0.1;
-T = ts:dt:tf;
-
-xs = -10;
-ys = 0;
-v = 1;
-heading = 0;
-
-uav = UAV();
-uav = uav.setup(xs,ys,v,heading,dt);
-    
-    for i=1:length(T)
-        [u,v]=vf.heading(uav.x,uav.y);
-        heading_cmd = atan2(v,u);
-        uav = uav.update_pos(heading_cmd);
-    end
- figure
- hold on
- uav.pltUAV();
- vf.pltff();
- vf.pltDecay();
-     vf.rvf{1}.pltEqualStrength();
  
- cxs = 2.5*cos(0:0.1:2*pi);
- cys = 2.5*sin(0:0.1:2*pi);
- plot(cxs,cys,'k.');
 xlabel('x');
 ylabel('y');
 title('Lowest cost obstacle avoidance from search space');
 
 
-function E = VF(X)
+function E = VF(X,plt)
 
     r = X(1);
     H = X(2);
@@ -129,6 +95,8 @@ function E = VF(X)
     vf = vf.navf('line');
     vf.avf{1}.angle = pi/2;
     vf.NormSummedFields = 0;
+
+
     vf.avf{1}.normComponents = true;
     vf.normAttractiveFields = false;
 
@@ -140,45 +108,51 @@ function E = VF(X)
     vf.rvf{1}.H = H;
 
     ts = 0;
-    tf = 25;
-    dt = 0.1;
+    tf = 50;
+    dt = 0.01;
     T = ts:dt:tf;
     
-    xs = -10;
+    xs = -200;
     ys = 0;
-    v = 1;
+    v = 20;
     heading = 0;
 
     uav = UAV();
     uav = uav.setup(xs,ys,v,heading,dt);
     
-    for i=1:length(T)
+    R = uav.v/0.35;
+    vf.avf{1}.H = 2;
+    e = 0;
+    
+    while uav.x<200
         [u,v]=vf.heading(uav.x,uav.y);
         heading_cmd = atan2(v,u);
         uav = uav.update_pos(heading_cmd);
         
         range = sqrt(uav.x^2+uav.y^2);
-        if range < 2.5
-            e(i) = 100+uav.y;
+        
+        if range < uav.v/0.35
+            e = e+10/range  +  uav.y/(R)*dt;
         else
-            e(i) = uav.y;
+            e = e+uav.y/(R)*dt;
         end
 
     end
     
-%     figure
-%     hold on
-%     uav.pltUAV();
-%     vf.pltff();
-%     vf.pltDecay();
-%     
-%     cxs = 2.5*cos(0:0.1:2*pi);
-%      cys = 2.5*sin(0:0.1:2*pi);
-%      plot(cxs,cys,'k.');
-%     
-%     vf.rvf{1}.pltEqualStrength();
-%     pause()
-    E = sum(e);
+    if plt
+    figure
+    hold on
+    uav.pltUAV();
+    vf.pltff();
+    vf.pltDecay();
+    
+    cxs = R*cos(0:0.1:2*pi);
+     cys = R*sin(0:0.1:2*pi);
+     plot(cxs,cys,'k.');
+    
+    vf.rvf{1}.pltEqualStrength();
+    end
+    E = e;
 
 end
 

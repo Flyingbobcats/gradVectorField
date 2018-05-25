@@ -1,8 +1,6 @@
-function [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath)
+function [cost,error,location] = costANDerror(uav,obstR,optPath)
 
     cost = 0;
-    
-    range = sqrt((uav.x-obstX)^2+(uav.y-obstY)^2);
     
     %Calculate cost
     
@@ -15,7 +13,7 @@ function [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath)
     cost = cost+ abs(uav.y) / (obstR)*uav.dt;
     
     %Pentalize for entering obstacle region
-    if range <= obstR
+    if range < obstR
         cost = cost+100;
     end
     
