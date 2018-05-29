@@ -1,4 +1,4 @@
-function [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath)
+function [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath,dt)
 
     cost = 0;
     
@@ -8,7 +8,7 @@ function [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath)
     
     %Pentalize for turn around
     if uav.heading > deg2rad(175) && uav.heading <deg2rad(285)
-        cost = 1000;
+        cost = 100;
     end
     
     %Pentalize for deviating path
@@ -16,7 +16,7 @@ function [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath)
     
     %Pentalize for entering obstacle region
     if range < obstR
-        cost = cost+100;
+        cost = cost+100*dt;
     end
     
     
