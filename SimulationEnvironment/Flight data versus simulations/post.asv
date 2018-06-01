@@ -42,7 +42,6 @@ axis equal
 figure('pos',[1,1,700,1000]);
 subplot(4,1,1)
 hold on
-grid on
 set(gca,'fontsize',12);
 plot(t,position(:,1)) % plotting x position versus time
 xlabel('time time [s]');
@@ -53,7 +52,6 @@ legend({'Measured state','Set-point'});
 % y position
 subplot(4,1,2)
 hold on
-grid on
 set(gca,'fontsize',12);
 plot(t,position(:,2)) % plotting y position versus time
 xlabel('time [s]');
@@ -64,7 +62,6 @@ plot(t,waypoint(:,2),'--r','linewidth',2); % plotting waypoint y path
 subplot(4,1,3)
 set(gca,'fontsize',12);
 hold on
-grid on
 plot(t,position(:,3)) % plotting y position versus time
 xlabel('time [s]');
 ylabel('z [m]');

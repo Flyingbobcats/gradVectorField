@@ -71,26 +71,20 @@ fr = @(X) GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,m,xf);
 disp(costOfFlight);
 plot(position(1500:end,1),position(1500:end,2),'b--','linewidth',3);
 
-h = legend({'Guidance','Obstacle','Planned Path','Simulation Path','Start','End','Experimental Path'});
-% h = legend({'Guidance','Obstacle','Singularity','Planned Path','Simulation Path','Start','End','Experimental Path'});
-
+h = legend({'Guidance','Obstacle','Singularity','Planned Path','Simulation Path','Start','End','Experimental Path'});
 h.Position=[0.745555557095342 0.250416670441627 0.159999996920427 0.15];
-str = strcat('Scenario:',num2str(scenario),{'   '},'m=',num2str(m),{'  '}, 'y_o=',num2str(sprintf('%0.1f',obstY)),{'  '},'H=',num2str(sprintf('%0.1f',Xsolved(2))),{'  '},'k=',num2str(sprintf('%0.1f',Xsolved(1))),{'  '},'Cost=',num2str(sprintf('%0.0f',simCost)));
-title(str);
 
 for i=1:length(t)
     if t(i)>15
         index = i;
-        VEL = vel(i:end);
         break
     end 
 end
 
-
 perDiffTime = abs(flightTime-simTime) / (mean([simTime,flightTime]))*100;
 perDiffCost = abs(costOfFlight-simCost) / (mean([costOfFlight,simCost]))*100;
-meanVelocity = mean(VEL);
-stdVelocity = std(VEL);
+meanVelocity = mean(vel);
+stdVelocity = std(vel);
 
 figure
 hold on
@@ -140,7 +134,6 @@ function [costOfFlight,flightTime] = flightCost(position,obstR,obstY,xs,ys,veloc
         uav.y = position(i,2);
         dt = t(i)-t(i-1);
         uav.dt = dt;
-        
         
         
         if uav.x>-1
@@ -281,9 +274,10 @@ if plotFinal == true
 %         warning('Error in plotting, may be due to no singularities');
 %     end
     axis equal
-    axis([-2,3,-(obstR)*(n/2+1),(obstR)*(n/2+1)]);
+    axis([-2,3,-(obstR)*(n+1),(obstR)*(n+1)]);
     
-
+    str = strcat('m=',num2str(n),{'  '}, 'G=',num2str(-1),{'  '},'H=',num2str(sprintf('%0.1f',H)),{'  '},'k=',num2str(sprintf('%0.1f',k)),{'  '},'Cost=',num2str(sprintf('%0.0f',GVFcost)));
+    title(str);
     xlabel('East [m]');
     ylabel('North [m]');
     

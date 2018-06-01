@@ -22,12 +22,12 @@ if compareToCF
     xs = -2;
     xf = 2;
     ys = 0;
-    velocity = 0.2;
+    velocity = 0.15;
     dt = 0.1;
     heading = 0;
     n=1.5;
     obstR = n*velocity/0.35;
-    obstY =0.5*obstR;
+    obstY =0;
 
 
 else
@@ -131,7 +131,7 @@ vf = vectorField();
 vf = vf.navf('line');
 vf.avf{1}.angle = pi/2;
 vf.NormSummedFields = true;
-vf.avf{1}.H = velocity*n*2;
+vf.avf{1}.H = velocity*n;
 vf.avf{1}.normComponents = false;
 vf.normAttractiveFields = false;
 
