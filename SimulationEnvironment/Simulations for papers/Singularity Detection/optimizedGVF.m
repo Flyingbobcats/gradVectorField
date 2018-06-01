@@ -16,10 +16,22 @@ clear
 close all
 
 numSolved = true;
+compareToCF = true;
+
+if compareToCF
+    xs = -2;
+    xf = 2;
+    ys = 0;
+    velocity = 0.2;
+    dt = 0.1;
+    heading = 0;
+    n=1.5;
+    obstR = n*velocity/0.35;
+    obstY =0.5*obstR;
 
 
+else
 %UAV initial position 
-
 ys = 0;
 velocity = 15;
 heading = 0;
@@ -43,6 +55,7 @@ xf = 125*n;
 % n = 1.5;
 % k = 2.8;
 % H = 1;
+end
 
 
 
@@ -179,7 +192,7 @@ GVFcost = sum(COST);
 if plotFinal == true
     
     vf.NormSummedFields = true;
-    vf =vf.xydomain(200*n,0,0,45);
+    vf =vf.xydomain(xs*(n+1),0,0,45);
     hold on
     
     cxs = obstR*cos(0:0.01:2.1*pi)+obstX;
@@ -195,7 +208,12 @@ if plotFinal == true
     set(gca,'fontsize',12);
     p1 = quiver(X,Y,U,V);
     p2 = plot(cxs,cys,'linewidth',2);
-    p6 = plot(sing(:,1),sing(:,2),'ro','markersize',10,'markerfacecolor','r');
+    
+    try
+        p6 = plot(sing(:,1),sing(:,2),'ro','markersize',10,'markerfacecolor','r');
+    catch
+        warning('error plotting singularities');
+    end
     p7 = plot([uav.xs(1),175*n],[uav.ys(1),0],'g','linewidth',4);
     p5 = plot(uav.xs,uav.ys,'k-','linewidth',2);
     p3 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
@@ -205,10 +223,14 @@ if plotFinal == true
     optPath = genOptPath(uav,obstR+1,vf.rvf{1}.x,vf.rvf{1}.y);
     % p8 = plot(optPath(:,1),optPath(:,2),'b-.','linewidth',3);
     
-    h = legend([p1,p2,p3,p4,p5,p6,p7,p8],{'Guidance','Obstacle','UAV Start','UAV end','UAV Path','Singularity','Planned Path','Equal Strength'},'Location','best');
-    h.Position=[0.745555557095342 0.250416670441627 0.159999996920427 0.15];
+    try
+        h = legend([p1,p2,p3,p4,p5,p6,p7,p8],{'Guidance','Obstacle','UAV Start','UAV end','UAV Path','Singularity','Planned Path','Equal Strength'},'Location','best');
+        h.Position=[0.745555557095342 0.250416670441627 0.159999996920427 0.15];
+    catch
+        warning('Error in plotting, may be due to no singularities');
+    end
     axis equal
-    axis([-125*n,200*n,-75*n,75*n]);
+    axis([xs*(n+1),xf*(n+1),-(obstR)*(n+1),(obstR)*(n+1)]);
     
     str = strcat('m=',num2str(n),{'  '}, 'G=',num2str(-1),{'  '},'H=',num2str(sprintf('%0.1f',H)),{'  '},'k=',num2str(sprintf('%0.1f',k)),{'  '},'Cost=',num2str(sprintf('%0.0f',GVFcost)));
     title(str);

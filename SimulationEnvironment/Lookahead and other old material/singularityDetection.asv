@@ -12,7 +12,7 @@ runCirc = true;
 runGridDensity = false;
 runGridWidth = false;
 
-xs = -100:5:100;
+xs = -50:5:50;
 ys = xs;
 
 for i=1:length(xs)
@@ -89,24 +89,21 @@ for j = 1:length(R)
         x0 = XYS(1,i);
         y0 = XYS(2,i);
         x = location{i};
-        
-        set(gca,'fontsize',12);
         if solverFlag{i} == -2
             p1 = plot(x0,y0,'ro','markersize',7);
             p2 = plot(x(1),x(2),'r.','markersize',30);
             p3 = plot([x(1),x0],[x(2),y0],'r--','markersize',15);
         elseif solverFlag{i} ==1 || solverFlag{i} ==2 || solverFlag{i} ==3 || solverFlag{i} ==4
 %             p4 = plot(x0,y0,'ko','markersize',7);
-            p5 =plot(x(1),x(2),'ro','markersize',10,'markerfacecolor','r');
+            p5 =plot(x(1),x(2),'k.','markersize',20);
 %             p6 =plot([x(1),x0],[x(2),y0],'k--','markersize',15);
         end
         axis equal
-        axis([-60,80,-50,50]);
+        axis([-100,100,-50,50]);
         
         
     end
 %     legend([p7,p4,p5],{'Equal Strength','Initial Condition','Minimum'});
-    legend({'Guidance','Equal Strength','Singularity'});
     xlabel('x');
     ylabel('y');
 end
@@ -253,13 +250,13 @@ r = 0.1;
 decayR = 35*2;
 
 
-UG = -(a*x+b*y)*a+10*b;
-VG = -(a*x+b*y)*b-10*a;
+UG = -(a*x+b*y)*a+b;
+VG = -(a*x+b*y)*b-a;
 magG = sqrt(UG^2+VG^2);
 
 
 
-H = 100;
+H = 0;
 G = 1;
 
 UO = G*2*(x-xc)*((x-xc)^2+(y-yc)^2-r^2)+H*2*(y-yc);
