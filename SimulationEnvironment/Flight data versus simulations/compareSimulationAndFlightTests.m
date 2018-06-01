@@ -15,7 +15,7 @@ clc
 clear
 close all
 
-scenario = 1;
+scenario = 3;
 
 xs = -2;
 xf = 2;
@@ -60,17 +60,27 @@ plotFinal = true;
 disp('gvf parameters');
 figure('pos',[10 10 900 600]);
 fr = @(X) GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,m,xf);
-fr(Xsolved);
+[simCost,simTime] = fr(Xsolved);
 
 [position,vel,t,wpts] = post();
 
-costOfFlight = flightCost(position,obstR,obstY,xs,ys,velocity,heading,dt);
+
+
+[costOfFlight,flightTime] = flightCost(position,obstR,obstY,xs,ys,velocity,heading,dt,t);
 disp(costOfFlight);
 plot(position(:,1),position(:,2),'b-','linewidth',3);
 
 
+figure
+plot(t,vel);
 
-function costOfFlight = flightCost(position,obstR,obstY,xs,ys,velocity,heading,dt)
+
+perDiffTime = abs(flightTime-simTime) / (mean([simTime,flightTime]))*100
+perDiffCost = abs(costOfFlight-simCost) / (mean([costOfFlight,simCost]))*100
+
+
+
+function [costOfFlight,flightTime] = flightCost(position,obstR,obstY,xs,ys,velocity,heading,dt,t)
     
     uav = UAV();
     uav = uav.setup(xs,ys,velocity,heading,dt);
@@ -78,18 +88,31 @@ function costOfFlight = flightCost(position,obstR,obstY,xs,ys,velocity,heading,d
 
     
     COST = [];
-    for i=1:length(position)
+    t_start = [];
+    for i=2:length(position)
         uav.x = position(i,1);
         uav.y = position(i,2);
+        dt = t(i)-t(i-1);
+        uav.dt = dt;
+        
+        
+        if uav.x>-1
+            if isempty(t_start)
+             t_start = t(i);
+            end
         [cost,error,location] = costANDerror(uav,obstR,0,obstY,optPath,dt);
         COST  = [COST;cost];
+        end
+        
     end
+    
+    flightTime = t(end)-t_start;
     
     costOfFlight = sum(COST);
 
 end
 
-function GVFcost = GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf)
+function [GVFcost,simTime] = GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf)
 
 
 obstX = 0;
@@ -217,6 +240,7 @@ if plotFinal == true
     xlabel('East [m]');
     ylabel('North [m]');
     
+    simTime = uav.t;
 end
 
 
