@@ -15,12 +15,12 @@ clc
 clear
 close all
 
-scenario = 3;
+scenario = 2;
 
 xs = -2;
 xf = 2;
 ys = 0;
-velocity = 0.2;
+velocity = 0.15;
 dt = 0.1;
 heading = 0;
 
@@ -32,7 +32,7 @@ if scenario == 1
     
     
 elseif scenario ==2
-    Xsolved = [2.0,-4.6];
+    Xsolved = [2.0,-4.2];
     m = 1;
     obstR = m*velocity/0.35;
     obstY = 0.5*obstR;
@@ -233,7 +233,7 @@ if plotFinal == true
         warning('Error in plotting, may be due to no singularities');
     end
     axis equal
-    axis([xs*(n+1),xf*(n+1),-(obstR)*(n+1),(obstR)*(n+1)]);
+    axis([-2.5,2.5,-(obstR)*(n+1),(obstR)*(n+1)]);
     
     str = strcat('m=',num2str(n),{'  '}, 'G=',num2str(-1),{'  '},'H=',num2str(sprintf('%0.1f',H)),{'  '},'k=',num2str(sprintf('%0.1f',k)),{'  '},'Cost=',num2str(sprintf('%0.0f',GVFcost)));
     title(str);
