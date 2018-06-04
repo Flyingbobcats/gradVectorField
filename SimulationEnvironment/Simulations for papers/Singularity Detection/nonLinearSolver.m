@@ -291,7 +291,7 @@ vf.avf{1}.normComponents = false;
 vf = vf.nrvf('circ');
 vf.rvf{1}.decayR = 35;
 vf.rvf{1}.r = 0.01;
-vf.rvf{1}.H = 1;
+vf.rvf{1}.H = 0;
 vf.rvf{1}.G = -1;
 vf.rvf{1}.y = 0;
 
