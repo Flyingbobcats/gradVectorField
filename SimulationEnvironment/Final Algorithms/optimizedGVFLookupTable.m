@@ -15,15 +15,15 @@ clc
 clear
 close all
 
-ns = 1:1:5;
+ns = 1:0.5:5;
 cs = 0.01:0.1:0.9;
 
 %UAV initial position 
 ys = 0;
 velocity = 10;
 heading = 0;
-dt = 0.01;
-
+dt = 0.02;
+tic
 for i=1:length(ns)
     parfor j=1:length(cs)
         tic;
@@ -45,7 +45,6 @@ for i=1:length(ns)
         options = optimoptions('fmincon','Display','none');
         options.DiffMinChange = 0.05;
         options.DiffMaxChange = 0.3;
-%         options.PlotFcn = @optimplotfval;
         options.StepTolerance = 1e-7;
 
 
@@ -58,7 +57,7 @@ for i=1:length(ns)
         ub = [4,6];
 
         saveFigure = true;
-        tic
+   
         [Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
         sim_time = toc;
         
@@ -67,12 +66,14 @@ for i=1:length(ns)
         
         KS(i,j) = Xsolved(1);
         HS(i,j) = Xsolved(2);
-        time_to_solve(i,j) = toc;
+%         time_to_solve(i,j) = toc;
 
     end
     clc
     disp(strcat(num2str(i/length(ns)*100),{' '}, '% complete'));
 end
+
+
 
 figure
 for i=1:length(ns) 
@@ -131,14 +132,14 @@ set(gca,'fontsize',12);
 xlabel('n [-]');
 ylabel('c [-]');
 zlabel('H_o [-]');
-
-figure
-surf(NS,CS,time_to_solve);
-set(gca,'fontsize',12);
-
-xlabel('n [-]');
-ylabel('c [-]');
-zlabel('time to solve (s)');
+% 
+% figure
+% surf(NS,CS,time_to_solve);
+% set(gca,'fontsize',12);
+% 
+% xlabel('n [-]');
+% ylabel('c [-]');
+% zlabel('time to solve (s)');
 
 
 
