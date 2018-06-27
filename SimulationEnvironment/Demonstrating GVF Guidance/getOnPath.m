@@ -1,24 +1,31 @@
+%==========================================================================
 % getOnPath.m
+% Description: 
+% Script demonstrates a Dubin's UAV guided by a path following VF guidance.
+% A single path circulation is provided and the flight path
+% observed. A single figure is produced, showing the UAV's route and the VF
+% guidance quiver
 %
-% Demonstrate UAV getting onto straight GVF path
 %
-
-
+%                                                    Author: Garrett Clem
+%==========================================================================
 
 clc
 clear
 close all
 
+%Obstacle Present
 obstacle = false;
 
 
-
+%UAV initial condition
 xs = -150;
 ys = 50;
 heading = 45;
 dt = 0.1;
 velocity = 20;
 
+%Create instance of VF class
 vf = vectorField();
 
 %Goal Path
@@ -30,8 +37,7 @@ vf.avf{1}.normComponents = false;
 vf.normAttractiveFields = false;
 vf = vf.xydomain(150,0,0,30);
 
-
-
+%If obstacle present, add to VF
 if obstacle
     vf = vf.nrvf('circ');
     vf.rvf{1}.r = 0.01;
@@ -40,10 +46,6 @@ if obstacle
     vf.rvf{1}.y = 0;
     vf.rvf{1}.decayR = 119;
 end
-
-
-
-
 
 %Create UAV class instance
 uav = UAV();
@@ -56,11 +58,11 @@ uav.plotUAV = false;
 uav.plotUAVPath = true;
 uav.plotFlightEnv = false;
 
+%Simulation start
 while uav.x<150
         [u,v]=vf.heading(uav.x,uav.y);
         heading_cmd = atan2(v,u);
         uav = uav.update_pos(heading_cmd); 
-    
 end
 
 figure

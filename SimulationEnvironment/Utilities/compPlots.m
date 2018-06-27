@@ -1,6 +1,10 @@
 %=========================================================================
-% Plots for circular and line vector fields. Individual components and
-% summs
+% compPlots.m
+%
+% Description:
+% Generate GVF convergence and circulation component plots for straight
+% line paths and circular paths
+%                                                     Author: Garrett Clem
 %==========================================================================
 
 clc

@@ -26,7 +26,5 @@ function vectorFieldObject = loadField(v,options)
         warning(str);
     end
     
-    
-    
     vectorFieldObject = v;
 end

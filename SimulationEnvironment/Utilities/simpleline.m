@@ -1,4 +1,11 @@
-%straight path for figure
+%=========================================================================
+% simpleLine.m
+%
+% Description:
+% Generate GVF for converging and following a line path, used in thesis
+% defense presentation
+%                                                     Author: Garrett Clem
+%==========================================================================
 
 
 clc
