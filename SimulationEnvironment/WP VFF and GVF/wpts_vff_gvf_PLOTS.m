@@ -24,7 +24,7 @@ close all
 %Setup basic vehicle and obstacle parameters
 v = 10;
 obstR = v/0.35*2;
-obstY = 0;
+obstY = -1/2*obstR;
 
 %Time step
 dt = 0.1;
@@ -75,22 +75,22 @@ VFFcost = VFFguidance(v,x,y,obstR,0,obstY,dt,Xsolved(1));
 axis([-450,450,-175,300]);
 legend({'Obstacle','UAV Start','UAV End','Planned Path','GVF','Waypoint','VFF'});
 
-%Plot GVF, VFF, WP, and Optimal Cost
-figure
-hold on
-c = {'VFF','GVF','WP','OPTIMAL'};
-p1 = bar([1],[VFFcost]);
-p2 = bar([2],[GVFcost]);
-p3 = bar([3],[WPcost]);
-p4 = bar([4],[OptPathCost]);
-set(p1,'facecolor',[0.9100    0.4100    0.1700]);
-set(p3,'facecolor','b');
-set(p2,'facecolor','r');
-set(gca,'fontsize',12);
-xticks([1,2,3,4]);
-xticklabels(c);
-ylabel('Cost [-]');
-axis([0,5,0,40]);
+% %Plot GVF, VFF, WP, and Optimal Cost
+% figure
+% hold on
+% c = {'VFF','GVF','WP','OPTIMAL'};
+% p1 = bar([1],[VFFcost]);
+% p2 = bar([2],[GVFcost]);
+% p3 = bar([3],[WPcost]);
+% p4 = bar([4],[OptPathCost]);
+% set(p1,'facecolor',[0.9100    0.4100    0.1700]);
+% set(p3,'facecolor','b');
+% set(p2,'facecolor','r');
+% set(gca,'fontsize',12);
+% xticks([1,2,3,4]);
+% xticklabels(c);
+% ylabel('Cost [-]');
+% axis([0,5,0,40]);
 
 
 

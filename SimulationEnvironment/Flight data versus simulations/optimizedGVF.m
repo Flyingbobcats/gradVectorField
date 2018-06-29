@@ -1,5 +1,5 @@
 %=========================================================================
-% searchForOptimizedGVF.m
+% optimizedGVF.m
 %
 % 
 % Script for optimized GVF decay radius multiplier k and circulathion Ho.
@@ -15,91 +15,114 @@ clc
 clear
 close all
 
+numSolved = true;
+compareToCF = true;
+
+if compareToCF
+    xs = -2;
+    xf = 2;
+    ys = 0;
+    velocity = 0.2;
+    dt = 0.1;
+    heading = 0;
+    n=1.5;
+    obstR = n*velocity/0.35;
+    obstY =0.5*obstR;
 
 
+else
 %UAV initial position 
-xs = -100;
-xf = 125;
 ys = 0;
-velocity = 10;
+velocity = 15;
 heading = 0;
-dt = 0.01;
+dt = 0.1;
 
 %Obstacle Definition
-n = 1;
+n = 5;
 obstR = n*velocity/0.35;
-obstY = 0;
+obstY =1/2*obstR;
 
-%Parameters to search
-
-k   = linspace(1.5,5,300);
-H_o = linspace(0.01,3,300);
+xs = -100*n;
+xf = 125*n;
 
 
+%Brute Force without circulationf
+% n = 1.5;
+% k = 2.8;
+% H = 0;
+
+%Brute Force with circulation
+% n = 1.5;
+% k = 2.8;
+% H = 1;
+end
+
+
+
+
+
+% 
+if numSolved
 plotFinal = false;
 fr = @(X) GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf);
 
-COSTS = [];
-KS = [];
-HS = [];
-SIMTIME = [];
+% Optimization options
+options = optimoptions('fmincon','Display','final-detailed');
+options = optimoptions('fmincon','Display','final-detailed');
+options.DiffMinChange = 0.1;
+options.DiffMaxChange = 0.2;
+options.PlotFcn = @optimplotfval;
+options.StepTolerance = 1e-3;
 
+
+x0 = [2,2];
+A = [];
+b = [];
+Aeq = [];
+beq = [];
+lb = [2,1];
+ub = [4,6];
+
+saveFigure = true;
 tic
-for i=1:length(k)
-    parfor j=1:length(H_o)
-        X = [k(i),H_o(j)];
-        [cost,isTrapped] = fr(X);
-        
-        
-        COSTS(i,j) = cost;
-        KS(i,j) = k(i);
-        HS(i,j) = H_o(j);
-       
-        if isTrapped
-            COSTS(i,j) = NaN;
-            TRAPS(i,j) = cost;
-        else
-            TRAPS(i,j) = NaN;
-        end
-    end
-    
-    clc
-    str = strcat(num2str(i/length(k)*100),{' '}, '% complete');
-    disp(str);
+[Xsolved,costR] = fmincon(fr,x0,A,b,Aeq,beq,lb,ub,[],options);
+sim_time = toc;
+
+else
+
+
+Xsolved = [2.95,0.1];
+Xsolved = [2.95,1];
 end
+plotFinal = true;
 
-Time_To_Solve = toc;
 
-figure
-hold on
-surf(KS,HS,COSTS);
-xlabel('k');
-ylabel('h');
-zlabel('cost');
-% 
-% plot3(KS,HS,TRAPS,'ro','markerfacecolor','r');
 
-save('LargeSearchSpaceData');
+disp('gvf parameters');
+Xsolved
+figure('pos',[10 10 900 600]);
+fr = @(X) GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf);
+fr(Xsolved);
 
 
 
 
 
+function GVFcost = GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf)
 
 
-
-
-
-
-
-function [GVFcost,isTrapped] = GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf)
-
-isTrapped = false;
 obstX = 0;
 
 %Parameters to solve for
+
 k = X(1);
-H = X(2);
+
+if obstY>0
+    H = -X(2);
+else
+    H = X(2);
+end
+
 
 %Setup vector field
 vf = vectorField();
@@ -155,7 +178,6 @@ while uav.x<=xf
     
     if uav.heading > deg2rad(175) && uav.heading <deg2rad(285)
         GVFcost = sum(COST);
-        isTrapped = true;
         disp('trapped');
         return
     end
@@ -170,7 +192,7 @@ GVFcost = sum(COST);
 if plotFinal == true
     
     vf.NormSummedFields = true;
-    vf =vf.xydomain(200,0,0,45);
+    vf =vf.xydomain(xs*(n+1),0,0,45);
     hold on
     
     cxs = obstR*cos(0:0.01:2.1*pi)+obstX;
@@ -186,8 +208,13 @@ if plotFinal == true
     set(gca,'fontsize',12);
     p1 = quiver(X,Y,U,V);
     p2 = plot(cxs,cys,'linewidth',2);
-    p6 = plot(sing(:,1),sing(:,2),'ro','markersize',10,'markerfacecolor','r');
-    p7 = plot([uav.xs(1),175],[uav.ys(1),0],'g','linewidth',4);
+    
+    try
+        p6 = plot(sing(:,1),sing(:,2),'ro','markersize',10,'markerfacecolor','r');
+    catch
+        warning('error plotting singularities');
+    end
+    p7 = plot([uav.xs(1),175*n],[uav.ys(1),0],'g','linewidth',4);
     p5 = plot(uav.xs,uav.ys,'k-','linewidth',2);
     p3 = plot(uav.xs(1),uav.ys(1),'db','markersize',10,'markerfacecolor','b');
     p4 = plot(uav.xs(end),uav.ys(end),'sr','markersize',10,'markerfacecolor','r');
@@ -196,9 +223,14 @@ if plotFinal == true
     optPath = genOptPath(uav,obstR+1,vf.rvf{1}.x,vf.rvf{1}.y);
     % p8 = plot(optPath(:,1),optPath(:,2),'b-.','linewidth',3);
     
-    legend([p1,p2,p3,p4,p5,p6,p7,p8],{'Guidance','Obstacle','UAV Start','UAV end','UAV Path','Singularity','Planned Path','Equal Strength'},'Location','southeast');
+    try
+        h = legend([p1,p2,p3,p4,p5,p6,p7,p8],{'Guidance','Obstacle','UAV Start','UAV end','UAV Path','Singularity','Planned Path','Equal Strength'},'Location','best');
+        h.Position=[0.745555557095342 0.250416670441627 0.159999996920427 0.15];
+    catch
+        warning('Error in plotting, may be due to no singularities');
+    end
     axis equal
-    axis([-125,200,-75,75]);
+    axis([xs*(n+1),xf*(n+1),-(obstR)*(n+1),(obstR)*(n+1)]);
     
     str = strcat('m=',num2str(n),{'  '}, 'G=',num2str(-1),{'  '},'H=',num2str(sprintf('%0.1f',H)),{'  '},'k=',num2str(sprintf('%0.1f',k)),{'  '},'Cost=',num2str(sprintf('%0.0f',GVFcost)));
     title(str);
@@ -211,6 +243,11 @@ end
 
 
 end
+
+
+
+
+
 
 
 

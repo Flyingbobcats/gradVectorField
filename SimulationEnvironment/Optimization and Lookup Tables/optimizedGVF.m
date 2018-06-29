@@ -78,10 +78,6 @@ figure('pos',[10 10 900 600]);
 fr = @(X) GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf);
 fr(Xsolved);
 
-
-
-
-
 function GVFcost = GVF(X,velocity,dt,plotFinal,obstR,obstY,xs,ys,n,xf)
 obstX = 0;
 
@@ -161,7 +157,8 @@ while uav.x<=xf
     %Determine cost and error
     [cost,error,location] = costANDerror(uav,obstR,obstX,obstY,optPath,dt);
     COST  = [COST;cost];
-    ERROR = [ERROR;error];  
+    ERROR = [ERROR;error];
+    
 end
 
 %Determine total cost
